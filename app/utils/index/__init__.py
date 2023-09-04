@@ -12,7 +12,7 @@ def get_indexer(config: Config, vector_store: BaseVectorStore):
         the indexer
     """
     
-    if config.INDEXER_TYPE == 'fixed_chunk':
+    if config.CHUNKING_STRATEGY == 'fixed':
         return FixedChunkIndexer(config, vector_store)
 
     else:

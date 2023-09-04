@@ -1,8 +1,10 @@
 import os
+from typing import Any, Dict, List, Optional, Tuple
+from abc import abstractmethod
 
-from typing import Any
 from langchain.document_loaders import TextLoader, WebBaseLoader
 from langchain.text_splitter import TokenTextSplitter, TextSplitter
+from langchain.docstore.document import Document
 
 from app.utils.vectorstore import BaseVectorStore
 from app.config import Config
@@ -22,19 +24,37 @@ class Indexer:
         self.config = config
         self.vector_store = vector_store
 
-    def create_index(self):
+    @abstractmethod
+    def create_index(self, index_name: str) -> None:
+        """This function creates an index.
+        
+        Args:
+            index_name: the index name
+        Returns:
+            none
+        """
 
-    def add_document(self, source_url: str, **kwargs: Any):
+    @abstractmethod
+    def drop_index(self, index_name: str) -> None:
+        """This function drops an index.
+        
+        Args:
+            index_name: the index name
+        Returns:
+            none
+        """
+
+    @abstractmethod
+    def add_document(self, source_url: str, index_name: str, **kwargs: Any) -> None:
         """
         Embed and add the document to the vector store.
 
         Args:
             source_url: the source url
+            index_name: the index name
         Returns:
-            the embedded text
+            none
         """
-
-        return None
 
 class FixedChunkIndexer(Indexer):
     """This class represents a Fixed Chunk Indexer."""
@@ -57,14 +77,15 @@ class FixedChunkIndexer(Indexer):
 
         self.text_splitter = TokenTextSplitter(chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap)
 
-    def add_documents(self, source_url: str, **kwargs: Any) -> None:
+    def add_document(self, source_url: str, index_name: str, **kwargs: Any) -> None:
         """
         Embed and add the document to the vector store.
 
         Args:
             source_url: the source url
+            index_name: the index name
         Returns:
-            the embedded text
+            none
         """
 
         try:
@@ -80,6 +101,41 @@ class FixedChunkIndexer(Indexer):
         chunks = self.text_splitter.split(document)
 
         # Add the chunks to the vector store
-        self.vector_store.add_document(document)
+        self.vector_store.add_document(chunks, index_name=index_name, **kwargs)
 
         return None
+    
+    def similarity_search( 
+            self, 
+            query: str, 
+            k: int = 4, 
+            filter: Optional[Dict[str, Any]] = None,
+            index_name: Optional[str] = None
+        ) -> List[Tuple[Document, float]]:
+        """This function performs a similarity search.
+        
+        """
+        return self.vector_store.similarity_search(query, k, filter=filter, index_name=index_name)
+    
+    def create_index(self, index_name: str) -> None:
+        """This function creates an index.
+        
+        Args:  
+            index_name: the index name
+        Returns:
+            none
+        """
+
+        return self.vector_store.create_index(index_name)
+    
+    def drop_index(self, index_name: str) -> None:
+        """This function drops an index.
+        
+        Args:
+            index_name: the index name
+        Returns:
+            none
+        """
+
+        return self.vector_store.drop_index(index_name)
+    

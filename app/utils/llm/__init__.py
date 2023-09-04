@@ -15,7 +15,7 @@ class LLMHelper:
 
         self.config = config
 
-    def get_llm(self) -> ChatOpenAI:
+    def get_llm(self, temperature: float = None) -> ChatOpenAI:
         '''
             Returns the LLM model based on the config
 
@@ -31,10 +31,13 @@ class LLMHelper:
             assert self.config.OPENAI_API_KEY is not None, 'OPENAI_API_KEY must be set'
             assert self.config.OPENAI_ENGINE is not None, 'OPENAI_ENGINE must be set'
 
+            if temperature is None:
+                temperature = self.config.OPENAI_TEMPERATURE
+
             return ChatOpenAI(
                 model_name = self.config.OPENAI_ENGINE,
                 engine = self.config.OPENAI_ENGINE,
-                temperature = self.config.OPENAI_TEMPERATURE,
+                temperature = temperature,
                 max_tokens = self.config.OPENAI_MAX_TOKENS,
             )
 

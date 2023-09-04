@@ -1,6 +1,7 @@
 import logging
 
-from app.utils.config import Config
+from typing import Any, Dict, List, Optional, Tuple
+from app.config import Config
 
 class HistoryStore:
     """This class represents a History Store."""
@@ -16,7 +17,7 @@ class HistoryStore:
         self.config = config
         self.logger = logging.getLogger(__name__)
 
-class Manager:
+class HistoryManager:
     """This class represents a Manager of the Conversation History."""
 
     def __init__(self, config: Config, history_store: HistoryStore):
@@ -31,7 +32,7 @@ class Manager:
         self.config = config
         self.history_store = history_store
 
-    def add_message(self, message):
+    def add_message(self, message: str) -> None:
         """
         Add a message to the history.
 
@@ -42,8 +43,8 @@ class Manager:
         """
 
         raise NotImplementedError
-
-    def get_k_most_related_messages(self, message: str, k=None: int):
+    
+    def get_k_most_related_messages(self, message: str, k: int = 4) -> List[str]:
         """
         Get the k most related messages.
 
@@ -56,7 +57,7 @@ class Manager:
 
         raise NotImplementedError
 
-    def get_k_most_recent_messages(self, session_id: int, k=None: int):
+    def get_k_most_recent_messages(self, session_id: int, k: int = 4) -> List[str]:
         """
         Get the k most recent messages.
 

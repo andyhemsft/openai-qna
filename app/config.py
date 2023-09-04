@@ -26,7 +26,7 @@ class Config():
     OPENAI_ENGINE = os.getenv('OPENAI_ENGINE')
     OPENAI_EMBEDDING_ENGINE = os.getenv('OPENAI_EMBEDDING_ENGINE')
     OPENAI_TEMPERATURE = os.getenv('OPENAI_TEMPERATURE', 0.7)
-    OPENAI_MAX_TOKENS = os.getenv('OPENAI_MAX_TOKENS', -1)
+    OPENAI_MAX_TOKENS = os.getenv('OPENAI_MAX_TOKENS', 1000)
 
     # Vector Store parameters
     VECTOR_STORE_TYPE = os.getenv('VECTOR_STORE_TYPE', 'faiss') # redis, azure, faiss

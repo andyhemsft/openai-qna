@@ -1,10 +1,18 @@
 import logging
-fomr datetime import datetime
+from datetime import datetime
 
 class Message:
     """This class represents a Message."""
 
-    def __init__(self, message: str, session_id: str, sequence_num: int, timestamp: datetime, user_id=None, is_bot=False):
+    def __init__(
+            self, 
+            message: str, 
+            session_id: str, 
+            sequence_num: int, 
+            timestamp: datetime, 
+            user_id=None, 
+            is_bot=False
+        ):
         """
         Initialize the Message.
 

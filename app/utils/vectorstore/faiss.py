@@ -29,22 +29,30 @@ class FAISSExtended(BaseVectorStore):
         self.vector_store = FAISS_TYPE.from_texts(texts, embeddings)
 
 
-    def add_documents(self, documents: List[Document]):
+    def add_documents(
+            self, 
+            documents: List[Document], 
+            index_name: Optional[str] = None,
+            **kwargs: Any
+        ) -> None:
         """This function adds documents to the vector store.
         
         Args:
             documents: the documents to add
+            index_name: the index name
         Returns:
             none
         """
 
+        logger.warning('FAISS does not support index_name parameter')
         self.vector_store.add_documents(documents)
 
     def similarity_search( 
             self, 
             query: str, 
             k: int = 4, 
-            filter: Optional[Dict[str, Any]] = None
+            filter: Optional[Dict[str, Any]] = None,
+            index_name: Optional[str] = None
         ) -> List[Tuple[Document, float]]:
         """This function performs a similarity search.
         
@@ -68,3 +76,15 @@ class FAISSExtended(BaseVectorStore):
         """
 
         logger.warning('FAISS does not support creating indexes')
+
+    def drop_index(self, index_name: str) -> None:
+        """This function drops an index.
+        
+        Args:
+            index_name: the index name
+        Returns:
+            none
+        """
+
+        logger.warning('FAISS does not support dropping indexes')
+

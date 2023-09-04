@@ -23,11 +23,17 @@ class BaseVectorStore:
 
 
     @abstractmethod
-    def add_documents(self, documents: List[Document]) -> None:
+    def add_documents(
+            self, 
+            documents: List[Document], 
+            index_name: Optional[str] = None,
+            **kwargs: Any
+        ) -> None:
         """This function adds documents to the vector store.
         
         Args:
             documents: the documents to add
+            index_name: the index name
         Returns:
             none
         """
@@ -37,7 +43,8 @@ class BaseVectorStore:
             self, 
             query: str, 
             k: int = 4, 
-            filter: Optional[Dict[str, Any]] = None
+            filter: Optional[Dict[str, Any]] = None,
+            index_name: Optional[str] = None
         ) -> List[Tuple[Document, float]]:
         """This function performs a similarity search.
         
