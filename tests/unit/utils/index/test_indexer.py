@@ -1,6 +1,8 @@
 import logging
 import pytest
 
+from langchain.docstore.document import Document
+
 from app.config import Config
 from app.utils.llm import LLMHelper
 from app.utils.vectorstore import get_vector_store
@@ -77,9 +79,22 @@ def test_drop_index(indexer):
 def test_add_document(indexer):
     """This function tests add document function."""
 
-    pass
+    for key in indexer:
+        indexer[key].add_document('samples/A.txt', 'test')
 
 def test_similarity_search(indexer):
     """This function tests similarity search function."""
 
-    pass
+    # Test query
+    query = "This is a test query only."
+    # Test document
+    doc =  Document(page_content="This is a test document only.", metadata={"source": "local"})
+
+    for key in indexer:
+        # Add the test document
+        indexer[key].vector_store.add_documents([doc])
+
+        result = indexer[key].similarity_search(query, k = 1, index_name = 'test')
+
+        assert len(result) > 0
+        assert result[0][0].page_content == "This is a test document only."

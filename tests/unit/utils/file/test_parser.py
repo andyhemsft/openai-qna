@@ -5,7 +5,6 @@ import logging
 from app.utils.file import parser
 from app.config import Config
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def test_langchain_pdf_parser():

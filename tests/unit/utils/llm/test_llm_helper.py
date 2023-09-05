@@ -7,22 +7,23 @@ from app.config import Config
 
 logger = logging.getLogger(__name__)
 
-class TestLLMHelper:
 
-    def test_get_llm(self):
-        """Test get_llm."""
+# TODO: We should mock the OpenAI API in the unit tests
 
-        config = Config()
-        llm_helper = LLMHelper(config)
-        llm = llm_helper.get_llm()
+def test_get_llm():
+    """Test get_llm."""
 
-        assert llm is not None
+    config = Config()
+    llm_helper = LLMHelper(config)
+    llm = llm_helper.get_llm()
 
-    def test_get_embeddings(self):
-        """Test get_embeddings."""
+    assert llm is not None
 
-        config = Config()
-        llm_helper = LLMHelper(config)
-        embeddings = llm_helper.get_embeddings()
+def test_get_embeddings():
+    """Test get_embeddings."""
 
-        assert embeddings is not None
+    config = Config()
+    llm_helper = LLMHelper(config)
+    embeddings = llm_helper.get_embeddings()
+
+    assert embeddings is not None

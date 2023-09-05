@@ -78,19 +78,32 @@ def test_add_documents(vector_store):
         if key == 'faiss':
             vector_store.add_documents([doc])
 
+def test_add_texts(vector_store):
+    """This function tests add texts function for vector store."""
+
+    text = "This is a test document only."
+    metadata = {"source": "local"}
+
+    for key, vector_store in vector_store.items():
+        if key == 'faiss':
+            vector_store.add_texts([text], [metadata])
+
 def test_similarity_search(vector_store):
     """This function tests similarity search function for vector store."""
 
     query = "This is a test query only."
-    doc =  Document(page_content="This is a test document only.", metadata={"source": "local"})
+    doc1 =  Document(page_content="This is a test document from local.", metadata={"source": "local"})
+    # doc2 =  Document(page_content="This is a test document from web.", metadata={"source": "web"})
 
     for key, vector_store in vector_store.items():
         if key == 'faiss':
-            vector_store.add_documents([doc])
-            result = vector_store.similarity_search(query)
+            vector_store.add_documents([doc1])
+            vector_store.add_texts(["This is a test document from web."], [{"source": "web"}])
+            result = vector_store.similarity_search(query, filter={"source": "web"})
 
             assert len(result) > 0
-            assert result[0][0].page_content == "This is a test document only."
+            assert result[0][0].page_content == "This is a test document from web."
+            assert result[0][0].metadata["source"] == "web"
 
 
     
