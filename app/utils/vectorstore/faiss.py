@@ -47,6 +47,24 @@ class FAISSExtended(BaseVectorStore):
         logger.warning('FAISS does not support index_name parameter')
         self.vector_store.add_documents(documents)
 
+    def add_texts(
+            self, 
+            texts: List[str],
+            metadatas: Optional[List[Dict[str, Any]]] = None, 
+            index_name: str = None, 
+            **kwargs: Any
+        ) -> None:
+        """This function adds texts to the vector store.
+        
+        Args:
+            texts: the texts to add
+            index_name: the index name
+        Returns:
+            none
+        """
+
+        self.vector_store.add_texts(texts, metadatas=metadatas)
+
     def similarity_search( 
             self, 
             query: str, 

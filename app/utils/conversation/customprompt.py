@@ -7,18 +7,34 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
 )
 
-system_message_template = """You are a helpful assistant that can rephase a question based on the past conversation.
-If the question is a follow up question, you need to rephrase the question to be a standalone question. 
-The standalone question must contain all the information needed to answer it. Do not change the meaning of the question.
-If the question is a standalone question already, you just repeat the question.
+# For rephase question
+system_message_template_rephrase_q = """You are a proficient assistant, skilled in rephrasing questions based on prior conversations. 
+If a follow-up question is already self-contained, you simply repeat it. 
+If the rephrased question conveys the same meaning as the original question, you just repeat the original question. 
+However, if the follow-up question lacks context, you expertly rephrase it into a standalone question that includes all the necessary information for a complete answer.
 """
 
-human_question_template ="""Given the following conversation and a follow up question, 
-rephrase the follow up question to be a standalone question.
-Chat History:
+human_question_template_rephrase_q = """
+Prior conversations:
 {chat_history}
-Follow Up Input: {question}
-Standalone question:"""
+Follow up question: {question}
+Rephased question:"""
 
-SYSTEM_MESSAGE_PROMPT = SystemMessagePromptTemplate.from_template(system_message_template)
-HUMAN_MESSAGE_PROMPT = HumanMessagePromptTemplate.from_template(human_question_template)
+SYSTEM_MESSAGE_PROMPT_REPHRASE_Q = SystemMessagePromptTemplate.from_template(system_message_template_rephrase_q)
+HUMAN_MESSAGE_PROMPT_REPHRASE_Q = HumanMessagePromptTemplate.from_template(human_question_template_rephrase_q)
+
+# For get semantic answer based on the related documents
+system_message_template_qa_wo_history = """You are an adept assistant, capable of answering questions based on context user provided.
+Please reply to the question using only the information presented in the summary.
+If you can't find it, reply politely that the information is not in the knowledge base.
+Detect the language of the question and answer in the same language. 
+If asked for enumerations list all of them and do not invent any.
+"""
+
+human_question_template_qa_wo_history = """
+Summary: {summary}
+Question: {question}
+Answer:"""
+
+SYSTEM_MESSAGE_PROMPT_QA_WO_HISTORY = SystemMessagePromptTemplate.from_template(system_message_template_qa_wo_history)
+HUMAN_MESSAGE_PROMPT_QA_WO_HISTORY = HumanMessagePromptTemplate.from_template(human_question_template_qa_wo_history)

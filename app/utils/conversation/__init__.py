@@ -6,7 +6,7 @@ class Message:
 
     def __init__(
             self, 
-            message: str, 
+            text: str, 
             session_id: str, 
             sequence_num: int, 
             timestamp: datetime, 
@@ -20,7 +20,7 @@ class Message:
             message: the message
         """
 
-        self.message = message
+        self.text = text
         self.session_id = session_id
         self.sequence_num = sequence_num
         self.timestamp = timestamp

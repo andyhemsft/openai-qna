@@ -34,6 +34,7 @@ class LLMHelper:
             if temperature is None:
                 temperature = self.config.OPENAI_TEMPERATURE
 
+            # We should use the chat completion API, since azure GPT-4 only supports chat completion
             return ChatOpenAI(
                 model_name = self.config.OPENAI_ENGINE,
                 engine = self.config.OPENAI_ENGINE,
@@ -64,6 +65,7 @@ class LLMHelper:
                 model_name = self.config.OPENAI_EMBEDDING_ENGINE,
                 deployment = self.config.OPENAI_EMBEDDING_ENGINE,
                 chunk_size = 1,
+                disallowed_special = () # Allow all special tokens
             )
 
         else:

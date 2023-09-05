@@ -1,6 +1,7 @@
 import os
 from typing import Any, Dict, List, Optional, Tuple
 from abc import abstractmethod
+import logging
 
 from langchain.document_loaders import TextLoader, WebBaseLoader
 from langchain.text_splitter import TokenTextSplitter, TextSplitter
@@ -8,6 +9,8 @@ from langchain.docstore.document import Document
 
 from app.utils.vectorstore import BaseVectorStore
 from app.config import Config
+
+logger = logging.getLogger(__name__)
 
 class Indexer:
     """This class represents an Indexer."""
@@ -91,17 +94,28 @@ class FixedChunkIndexer(Indexer):
         try:
             # Check if source url is a file
             if os.path.isfile(source_url):
-                document = TextLoader(source_url).load()
+                logging.debug(f'Loading document from file {source_url}')
+                document = TextLoader(source_url, encoding = 'utf-8').load()
             else:
+                logging.debug(f'Loading document from web {source_url}')
                 document = WebBaseLoader(source_url).load()
-        except:
-            raise ValueError('Invalid source url')
+        except Exception as e:
+            logger.error(e)
+            raise e
+            
 
         # Split the document into chunks
-        chunks = self.text_splitter.split(document)
+        chunks = self.text_splitter.split_documents(document)
+
+        keys = []
+        for i, chunk in enumerate(chunks):
+            # Create a unique key for the chunk
+            source_url = source_url.split('?')[0]
+
+            chunk.metadata = {"source": source_url, "chunk_id": i}
 
         # Add the chunks to the vector store
-        self.vector_store.add_document(chunks, index_name=index_name, **kwargs)
+        self.vector_store.add_documents(chunks, index_name=index_name, **kwargs)
 
         return None
     

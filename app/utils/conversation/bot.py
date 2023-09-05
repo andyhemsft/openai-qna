@@ -67,7 +67,7 @@ class LLMChatBot:
     def standardize_glossary(self, question: str) -> str:
         """Standardize the glossary."""
 
-        # TODO: implement this by replace the glossary with the standard glossary
+        # TODO: implement this by replacing the glossary with the standard one
         return question
 
     
@@ -79,8 +79,11 @@ class LLMChatBot:
             chat_history: the chat history
         """
 
+        if chat_history == '' or chat_history is None:
+            return question
+        
         chat_prompt = ChatPromptTemplate.from_messages(
-            [SYSTEM_MESSAGE_PROMPT, HUMAN_MESSAGE_PROMPT]
+            [SYSTEM_MESSAGE_PROMPT_REPHRASE_Q, HUMAN_MESSAGE_PROMPT_REPHRASE_Q]
         )
 
         # get a chat completion from the formatted messages
@@ -89,11 +92,17 @@ class LLMChatBot:
                 question=question,
                 chat_history=chat_history, 
             ).to_messages()
-        )
+        ).content
 
         return rephased_question
         
-    def get_semantic_answer(self, question: str, session_id: str, index_name: str = None, condense_question: bool = True) -> str:
+    def get_semantic_answer(
+            self, 
+            question: str, 
+            session_id: str, 
+            index_name: str = None, 
+            condense_question: bool = True
+        ) -> str:
         """
         Get the semantic answer.
 
@@ -105,22 +114,57 @@ class LLMChatBot:
             the answer
         """
 
-        if self.detect_PII(question, session_id):
-            return 'Sorry, I cannot answer this question.'
+        # TODO: Detect if there are any PII data in the question
         
         # standardize the glossary
         question = self.standardize_glossary(question)
 
         chat_history = self.history_manager.get_k_most_recent_messages(session_id)
 
-        # if condense_question
+        # if condense question
         if condense_question:
+            
+            logger.info("Condensing the question based on the chat history")
             question = self.rephrase_question(question, chat_history)
             
-        # get related documents
-        related_documents = self.indexer.similarity_search(question, index_name=index_name)
+            # get related documents
+            related_documents = self.indexer.similarity_search(question, index_name=index_name)
 
-        raise NotImplementedError
+            # concatenate the documents
+            documents = self.concatenate_documents(related_documents)
+
+            chat_prompt = ChatPromptTemplate.from_messages(
+                [SYSTEM_MESSAGE_PROMPT_QA_WO_HISTORY, HUMAN_MESSAGE_PROMPT_QA_WO_HISTORY]
+            )
+
+            # get a chat completion from the formatted messages
+            answer = self.llm(
+                chat_prompt.format_prompt(
+                    summary=documents,
+                    question=question, 
+                ).to_messages()
+            ).content
+
+        # dont condense question
+        else:
+            logger.info("Don't condense the question")
+            raise NotImplementedError
+
+        return answer
+    
+    def concatenate_documents(self, documents: List[str]) -> str:
+        """Concatenate the documents.
+        
+        Args:
+            documents: the documents
+        """
+
+        result = ''
+
+        for document in documents:
+            result += document[0].page_content + '\n'
+
+        return result
     
     def get_followup_question(self, question: str, session_id: str) -> str:
         """

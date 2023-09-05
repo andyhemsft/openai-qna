@@ -39,6 +39,22 @@ class BaseVectorStore:
         """
 
     @abstractmethod
+    def add_texts(
+            self, 
+            texts: List[str], 
+            index_name: Optional[str] = None,
+            **kwargs: Any
+        ) -> None:
+        """This function adds texts to the vector store.
+        
+        Args:
+            texts: the texts to add
+            index_name: the index name
+        Returns:
+            none
+        """
+
+    @abstractmethod
     def similarity_search( 
             self, 
             query: str, 
