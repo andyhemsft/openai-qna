@@ -1,4 +1,4 @@
-
+import os
 import logging
 from typing import List, Optional, Dict, Any, Tuple
 
@@ -28,6 +28,22 @@ class FAISSExtended(BaseVectorStore):
         texts = ["FAISS"]
         self.vector_store = FAISS_TYPE.from_texts(texts, embeddings)
 
+    def load_local(self, file_path: str) -> None:
+        """This function loads the vector store from a local file."""
+
+        # Check if the file exists
+        if os.path.exists(file_path):
+            logger.info(f"FAISS local file '{file_path}' exists, loading it")
+            self.vector_store = FAISS_TYPE.load_local(file_path, self.embeddings)
+
+        else:
+            logger.warning(f"FAISS local file '{file_path}' does not exist, creating a new one")
+            self.vector_store.save_local(file_path)
+
+    def save_local(self, file_path: str) -> None:
+        """This function saves the vector store to a local file."""
+
+        self.vector_store.save_local(file_path)
 
     def add_documents(
             self, 
@@ -45,7 +61,12 @@ class FAISSExtended(BaseVectorStore):
         """
 
         logger.warning('FAISS does not support index_name parameter')
+
+        # # Load the local file
+        # self.load_local(self.config.FAISS_LOCAL_FILE_INDEX)
         self.vector_store.add_documents(documents)
+        # # Save to local file
+        # self.save_local(self.config.FAISS_LOCAL_FILE_INDEX)
 
     def add_texts(
             self, 
@@ -62,8 +83,11 @@ class FAISSExtended(BaseVectorStore):
         Returns:
             none
         """
-
+        # # Load the local file
+        # self.load_local(self.config.FAISS_LOCAL_FILE_INDEX)
         self.vector_store.add_texts(texts, metadatas=metadatas)
+        # # Save to local file
+        # self.save_local(self.config.FAISS_LOCAL_FILE_INDEX)
 
     def similarity_search( 
             self, 

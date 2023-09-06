@@ -1,6 +1,7 @@
 import os
 import logging
 import pytest
+import shutil
 
 from langchain.docstore.document import Document
 
@@ -22,24 +23,23 @@ def test_get_vector_store():
     # Save old config
     old_vector_store_type = Config.VECTOR_STORE_TYPE
 
-    llm_helper = LLMHelper(config)
-    embeddings = llm_helper.get_embeddings()
 
     # Load FAISS vector store
     Config.VECTOR_STORE_TYPE = 'faiss'
-    vector_store = get_vector_store(config, embeddings)
+    vector_store = get_vector_store(config)
 
     assert isinstance(vector_store, FAISSExtended)
 
     # Load Redis vector store
     Config.VECTOR_STORE_TYPE = 'redis'
-    vector_store = get_vector_store(config, embeddings)
+    vector_store = get_vector_store(config)
 
     assert isinstance(vector_store, RedisExtended)
 
-
     # Restore old config
     Config.VECTOR_STORE_TYPE = old_vector_store_type
+
+
 
 @pytest.fixture()
 def vector_store():
@@ -53,21 +53,42 @@ def vector_store():
     # Save old config
     old_vector_store_type = Config.VECTOR_STORE_TYPE
 
-    llm_helper = LLMHelper(config)
-    embeddings = llm_helper.get_embeddings()
-
     # Load FAISS vector store
     Config.VECTOR_STORE_TYPE = 'faiss'
-    vector_store['faiss'] = get_vector_store(config, embeddings)
+    vector_store['faiss'] = get_vector_store(config)
 
     # Load Redis vector store
     Config.VECTOR_STORE_TYPE = 'redis'
-    vector_store['redis'] = get_vector_store(config, embeddings)
+    vector_store['redis'] = get_vector_store(config)
 
     # Restore old config
     Config.VECTOR_STORE_TYPE = old_vector_store_type
 
     yield vector_store
+
+    # Tear down
+    if os.path.exists(config.FAISS_LOCAL_FILE_INDEX):
+        shutil.rmtree(config.FAISS_LOCAL_FILE_INDEX)
+
+def test_load_local(vector_store):
+    """This function tests load local function for vector store."""
+
+    config = Config()
+
+
+
+    for key, vector_store in vector_store.items():
+        if key == 'faiss':
+            logger.info('Testing FAISS load from file')
+
+            assert os.path.exists(config.FAISS_LOCAL_FILE_INDEX) == False
+            vector_store.load_local(config.FAISS_LOCAL_FILE_INDEX)
+
+            assert os.path.exists(config.FAISS_LOCAL_FILE_INDEX) == True
+            vector_store.load_local(config.FAISS_LOCAL_FILE_INDEX)
+
+            shutil.rmtree(config.FAISS_LOCAL_FILE_INDEX)
+
 
 def test_add_documents(vector_store):
     """This function tests add documents function for vector store."""

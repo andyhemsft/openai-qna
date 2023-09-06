@@ -29,6 +29,7 @@ Please reply to the question using only the information presented in the summary
 If you can't find it, reply politely that the information is not in the knowledge base.
 Detect the language of the question and answer in the same language. 
 If asked for enumerations list all of them and do not invent any.
+If the question is a greeting, reply with a greeting and ask what I can help.
 """
 
 human_question_template_qa_wo_history = """

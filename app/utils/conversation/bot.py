@@ -1,13 +1,14 @@
 import logging
 from typing import List, Dict
 import uuid
+from datetime import datetime
 
 
 from app.config import Config
 from app.utils.conversation.history import HistoryManager
 from app.utils.llm import LLMHelper
 from app.utils.conversation.customprompt import *
-from app.utils.vectorstore import get_vector_store
+from app.utils.conversation import Message
 from app.utils.index import get_indexer
 
 
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class LLMChatBot:
 
-    def __init__(self, config: Config, history_manager: HistoryManager):
+    def __init__(self, config: Config):
         """
         Initialize the LLM Chat Bot.
 
@@ -24,15 +25,14 @@ class LLMChatBot:
         """
 
         self.config = config
-        self.history_manager = history_manager
+        self.history_manager = HistoryManager(config)
 
         llm_helper = LLMHelper(config)
 
         self.llm = llm_helper.get_llm()
         self.embeddings = llm_helper.get_embeddings()
 
-        vector_store = get_vector_store(config, self.embeddings)
-        self.indexer = get_indexer(config, vector_store)
+        self.indexer = get_indexer(config)
 
     def initialize_session(self, user_meta: Dict) -> str:
         """Initialize a session.
@@ -40,6 +40,18 @@ class LLMChatBot:
         """
 
         session_id = str(uuid.uuid4())
+
+        # Add the initial message
+        initial_message = Message(
+            text="New session started",
+            session_id=session_id,
+            sequence_num=0,
+            timestamp=datetime.now(),
+            user_id=user_meta['user_id'],
+            is_bot=True
+        ) 
+
+        self.history_manager.add_message(initial_message)
 
         return session_id
     
@@ -72,7 +84,7 @@ class LLMChatBot:
 
     
     def rephrase_question(self, question: str, chat_history: str) -> str:
-        """Rephrase the question.
+        """Rephrase the question based on the chat history.
         
         Args:
             question: the question
@@ -98,8 +110,7 @@ class LLMChatBot:
         
     def get_semantic_answer(
             self, 
-            question: str, 
-            session_id: str, 
+            message: Message, 
             index_name: str = None, 
             condense_question: bool = True
         ) -> str:
@@ -117,9 +128,9 @@ class LLMChatBot:
         # TODO: Detect if there are any PII data in the question
         
         # standardize the glossary
-        question = self.standardize_glossary(question)
+        question = self.standardize_glossary(message.text)
 
-        chat_history = self.history_manager.get_k_most_recent_messages(session_id)
+        chat_history = self.history_manager.get_k_most_recent_messages(message.session_id)
 
         # if condense question
         if condense_question:
@@ -149,6 +160,26 @@ class LLMChatBot:
         else:
             logger.info("Don't condense the question")
             raise NotImplementedError
+        
+        # Add the question and answer to the history
+        max_sequence_num = self.history_manager.get_max_sequence_num(message.session_id)
+
+        question_message = message
+        question_message.sequence_num = max_sequence_num + 1
+        question_message.timestamp = datetime.now()
+        question_message.is_bot = False
+
+        answer_message = Message(
+            text=answer,
+            session_id=message.session_id,
+            sequence_num=max_sequence_num + 2,
+            timestamp=datetime.now(),
+            user_id=message.user_id,
+            is_bot=True
+        )
+
+        self.history_manager.add_message(question_message)
+        self.history_manager.add_message(answer_message)
 
         return answer
     

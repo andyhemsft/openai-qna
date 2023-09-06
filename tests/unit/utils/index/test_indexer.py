@@ -1,33 +1,18 @@
 import logging
 import pytest
+import os
+import shutil
 
 from langchain.docstore.document import Document
 
 from app.config import Config
-from app.utils.llm import LLMHelper
-from app.utils.vectorstore import get_vector_store
 from app.utils.index.indexing import FixedChunkIndexer
 from app.utils.index import get_indexer
 
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture()
-def vector_store():
-    """This function returns a faiss vector stores."""
-
-    # Load config
-    config = Config()
-
-    llm_helper = LLMHelper(config)
-    embeddings = llm_helper.get_embeddings()
-
-    vector_store = get_vector_store(config, embeddings)
-
-    yield vector_store
-
-
-def test_get_indexer(vector_store):
+def test_get_indexer():
     """This function tests get indexer function."""
 
     # Load config
@@ -38,7 +23,7 @@ def test_get_indexer(vector_store):
 
     # Load Fixed Chunk Indexer
     Config.CHUNKING_STRATEGY = 'fixed'
-    indexer = get_indexer(config, vector_store)
+    indexer = get_indexer(config)
 
     assert isinstance(indexer, FixedChunkIndexer)
 
@@ -46,7 +31,7 @@ def test_get_indexer(vector_store):
     Config.CHUNKING_STRATEGY = old_chunking_strategy
 
 @pytest.fixture()
-def indexer(vector_store):
+def indexer():
     """Get all indexers."""
 
     indexer = {}
@@ -59,12 +44,16 @@ def indexer(vector_store):
 
     # Load Fixed Chunk Indexer
     Config.CHUNKING_STRATEGY = 'fixed'
-    indexer['fixed'] = get_indexer(config, vector_store)
+    indexer['fixed'] = get_indexer(config)
 
     # Restore old config
     Config.CHUNKING_STRATEGY = old_chunking_strategy
 
     yield indexer
+
+    # Tear down
+    for key in indexer:
+        indexer[key].drop_all_indexes()
 
 def test_create_index(indexer):
     """This function tests create index function."""

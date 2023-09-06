@@ -6,6 +6,7 @@ from langchain.document_loaders import PyPDFLoader
 from app.utils.file.blobstorage import BlobStorageClient
 from app.config import Config
 
+
 class Parser():
     """This class represents a Parser."""
 
@@ -52,6 +53,15 @@ class Parser():
 
         return None
 
+def get_parser(document_type: str) -> Parser:
+    """This function returns a parser based on the type."""
+
+    config = Config()
+    if document_type == 'pdf':
+        return PDFParser(config=config)
+
+    else:
+        raise ValueError('Parser type not supported')
 
 class PDFParser(Parser):
     """This class represents a PDF Parser."""

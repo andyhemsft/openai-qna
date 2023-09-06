@@ -14,6 +14,10 @@ class Config():
     """
 
     CSRF_ENABLED = True
+
+    # Chat Bot parameters
+    CHATBOT_SESSION_TIMEOUT = os.getenv('SESSION_TIMEOUT', 60 * 60) # 1 hour
+    CHATBOT_MAX_MESSAGES = os.getenv('MAX_MESSAGES', 100) # Max number of messages per session including bot messages
 	
     # LLM parameters
     LLM_TYPE = os.getenv('LLM_TYPE', 'openai')
@@ -30,6 +34,10 @@ class Config():
 
     # Vector Store parameters
     VECTOR_STORE_TYPE = os.getenv('VECTOR_STORE_TYPE', 'faiss') # redis, azure, faiss
+
+    # Faiss parameters
+    FAISS_LOCAL_FILE_CHATHISTORY = os.getenv('FAISS_LOCAL_FILE_CHATHISTORY', 'data/faiss/chathistory')
+    FAISS_LOCAL_FILE_INDEX = os.getenv('FAISS_LOCAL_FILE_INDEXING', 'data/faiss/index')
 
     # Redis parameters
     REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')

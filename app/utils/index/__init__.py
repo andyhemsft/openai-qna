@@ -1,8 +1,7 @@
 from app.utils.index.indexing import *
 from app.config import Config
-from app.utils.vectorstore import BaseVectorStore
 
-def get_indexer(config: Config, vector_store: BaseVectorStore):
+def get_indexer(config: Config):
     """This function Returns the indexer based on the config.
     
     Args:
@@ -13,7 +12,7 @@ def get_indexer(config: Config, vector_store: BaseVectorStore):
     """
     
     if config.CHUNKING_STRATEGY == 'fixed':
-        return FixedChunkIndexer(config, vector_store)
+        return FixedChunkIndexer(config)
 
     else:
         raise ValueError('Indexer type not supported')
