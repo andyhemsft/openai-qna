@@ -56,11 +56,6 @@ class LLMChatBot:
 
         return initial_message
     
-    def reload_index(self) -> None:
-        """Reload the index."""
-
-        self.indexer = get_indexer(self.config)
-    
     def detect_PII(self, question: str, session_id: str) -> bool:
         """Detect PII in the question.
         

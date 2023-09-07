@@ -167,18 +167,3 @@ def chat_history():
 
     else:
         raise ValueError('Method not supported')
-    
-@app.route(API_PREFIX('/chat/reload_index'), methods=['POST'])
-def chat_reload_index():
-    """
-        Handle chat reload index
-    """
-
-    if request.method == 'POST':
-        # Reload index
-        
-        llm_chat_bot.reload_index()
-        return jsonify({'data': 'Index reloaded'})
-
-    else:
-        raise ValueError('Method not supported')
