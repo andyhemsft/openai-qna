@@ -41,7 +41,7 @@ SYSTEM_MESSAGE_PROMPT_QA_WO_HISTORY = SystemMessagePromptTemplate.from_template(
 HUMAN_MESSAGE_PROMPT_QA_WO_HISTORY = HumanMessagePromptTemplate.from_template(human_question_template_qa_wo_history)
 
 
-# For get semantic answer based on the related documents
+# For get semantic answer based on the related documents with chat history
 system_message_template_qa_w_history = """You are an adept assistant, capable of answering questions based on context user provided.
 Please reply to the question using only the information presented in the summary and chat history.
 If you can't find it, reply politely that the information is not in the knowledge base.
