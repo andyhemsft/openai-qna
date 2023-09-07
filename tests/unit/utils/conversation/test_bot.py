@@ -34,12 +34,28 @@ def test_rephase_question(llm_chat_bot) -> None:
     assert rephrase_question == question
 
     # Test case 2
-    chat_history = """Excuse me, which bus goes to the airport?
-    The 757 goes directly from the city center to the airport.
-
-    When will it arrive?
-    It will arrive in 5 minutes.
-    """
+    chat_history = [
+        Message(
+            text='Excuse me, which bus goes to the airport?',
+            session_id='test_session_id',
+            sequence_num=1,
+        ),
+        Message(
+            text='The 757 goes directly from the city center to the airport.',
+            session_id='test_session_id',
+            sequence_num=2,
+        ),
+        Message(
+            text='When will it arrive?',
+            session_id='test_session_id',
+            sequence_num=3,
+        ),
+        Message(
+            text='It will arrive in 5 minutes.',
+            session_id='test_session_id',
+            sequence_num=4,
+        )
+    ]
     
     question = 'How much does it cost?'
 
@@ -91,11 +107,7 @@ def test_get_semantic_answer(llm_chat_bot) -> None:
 
     message = Message(
         text='What is the capital of France?',
-        session_id='test_session_id',
-        sequence_num=None,
-        timestamp=None,
-        user_id=None,
-        is_bot=False
+        session_id='test_session_id'
     )
 
     answer = llm_chat_bot.get_semantic_answer(
@@ -103,16 +115,12 @@ def test_get_semantic_answer(llm_chat_bot) -> None:
                 index_name = None, 
                 condense_question = True)
 
-    logging.info(f'Answer 1: {answer}')
+    logging.info(f'Answer 1: {answer.text}')
 
     # Test case 2
     message = Message(
         text="Who is a better writer, Elon Musk or Shakespeare?",
-        session_id='test_session_id',
-        sequence_num=None,
-        timestamp=None,
-        user_id=None,
-        is_bot=False
+        session_id='test_session_id'
     )
 
     answer = llm_chat_bot.get_semantic_answer(
@@ -120,16 +128,12 @@ def test_get_semantic_answer(llm_chat_bot) -> None:
                 index_name = None, 
                 condense_question = True)
 
-    logging.info(f'Answer 2: {answer}')
+    logging.info(f'Answer 2: {answer.text}')
 
     # Test case 3
     message = Message(
         text="Hello",
-        session_id='test_session_id',
-        sequence_num=None,
-        timestamp=None,
-        user_id=None,
-        is_bot=False
+        session_id='test_session_id'
     )
 
     answer = llm_chat_bot.get_semantic_answer(
@@ -137,16 +141,12 @@ def test_get_semantic_answer(llm_chat_bot) -> None:
                 index_name = None,
                 condense_question = True)
     
-    logging.info(f'Answer 3: {answer}')
+    logging.info(f'Answer 3: {answer.text}')
 
     # Test case 4
     message = Message(
         text="你好",
-        session_id='test_session_id',
-        sequence_num=None,
-        timestamp=None,
-        user_id=None,
-        is_bot=False
+        session_id='test_session_id'
     )
 
     answer = llm_chat_bot.get_semantic_answer(
@@ -154,4 +154,4 @@ def test_get_semantic_answer(llm_chat_bot) -> None:
                 index_name = None,
                 condense_question = True)
     
-    logging.info(f'Answer 3: {answer}')
+    logging.info(f'Answer 4: {answer.text}')

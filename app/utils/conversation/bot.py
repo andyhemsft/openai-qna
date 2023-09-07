@@ -34,7 +34,7 @@ class LLMChatBot:
 
         self.indexer = get_indexer(config)
 
-    def initialize_session(self, user_meta: Dict) -> str:
+    def initialize_session(self, user_meta: Dict) -> Message:
         """Initialize a session.
         
         """
@@ -43,17 +43,23 @@ class LLMChatBot:
 
         # Add the initial message
         initial_message = Message(
-            text="New session started",
+            text="",
             session_id=session_id,
             sequence_num=0,
-            timestamp=datetime.now(),
+            received_timestamp=datetime.now(),
+            responded_timestamp=datetime.now(),
             user_id=user_meta['user_id'],
             is_bot=True
         ) 
 
         self.history_manager.add_message(initial_message)
 
-        return session_id
+        return initial_message
+    
+    def reload_index(self) -> None:
+        """Reload the index."""
+
+        self.indexer = get_indexer(self.config)
     
     def detect_PII(self, question: str, session_id: str) -> bool:
         """Detect PII in the question.
@@ -83,7 +89,7 @@ class LLMChatBot:
         return question
 
     
-    def rephrase_question(self, question: str, chat_history: str) -> str:
+    def rephrase_question(self, question: str, chat_history: List[Message]) -> str:
         """Rephrase the question based on the chat history.
         
         Args:
@@ -91,18 +97,21 @@ class LLMChatBot:
             chat_history: the chat history
         """
 
-        if chat_history == '' or chat_history is None:
+        if chat_history is None or len(chat_history) == 0:
             return question
         
         chat_prompt = ChatPromptTemplate.from_messages(
             [SYSTEM_MESSAGE_PROMPT_REPHRASE_Q, HUMAN_MESSAGE_PROMPT_REPHRASE_Q]
         )
 
+        chat_history_concatenated = '\n'.join([chat.text for chat in chat_history])
+        logger.debug(f'Chat history concatenated: {chat_history_concatenated}')
+
         # get a chat completion from the formatted messages
         rephased_question = self.llm(
             chat_prompt.format_prompt(
                 question=question,
-                chat_history=chat_history, 
+                chat_history=chat_history_concatenated, 
             ).to_messages()
         ).content
 
@@ -113,7 +122,7 @@ class LLMChatBot:
             message: Message, 
             index_name: str = None, 
             condense_question: bool = True
-        ) -> str:
+        ) -> Message:
         """
         Get the semantic answer.
 
@@ -124,25 +133,42 @@ class LLMChatBot:
         Returns:
             the answer
         """
-
         # TODO: Detect if there are any PII data in the question
-        
+
+        # Timestamp for recieving the question
+        received_timestamp = datetime.now()
+
+        max_sequence_num, earliest_time = self.history_manager.get_max_sequence_num_and_earliest_time(message.session_id)
+
+        # Check if the session is expired
+        if max_sequence_num >= self.config.CHATBOT_MAX_MESSAGES or \
+            (received_timestamp - earliest_time).total_seconds() > self.config.CHATBOT_SESSION_TIMEOUT:
+            # Exceed the maximum number of messages
+            # Restart the session
+            initial_message = self.initialize_session(user_meta={'user_id': message.user_id})
+
+            return initial_message
+
+
         # standardize the glossary
         question = self.standardize_glossary(message.text)
 
-        chat_history = self.history_manager.get_k_most_recent_messages(message.session_id)
+        chat_history = self.history_manager.get_k_most_recent_messages(message.session_id, reverse=False)
 
         # if condense question
         if condense_question:
             
             logger.info("Condensing the question based on the chat history")
             question = self.rephrase_question(question, chat_history)
+            logger.debug(f'Condensed question: {question}')
             
             # get related documents
             related_documents = self.indexer.similarity_search(question, index_name=index_name)
 
             # concatenate the documents
             documents = self.concatenate_documents(related_documents)
+
+            logger.debug(f'Concatenated documents: {documents}')
 
             chat_prompt = ChatPromptTemplate.from_messages(
                 [SYSTEM_MESSAGE_PROMPT_QA_WO_HISTORY, HUMAN_MESSAGE_PROMPT_QA_WO_HISTORY]
@@ -159,21 +185,47 @@ class LLMChatBot:
         # dont condense question
         else:
             logger.info("Don't condense the question")
-            raise NotImplementedError
+
+            chat_history = '\n'.join([chat.text for chat in chat_history])
+            question_with_chat_history = f'{chat_history}\n{question}'
+
+            logger.debug(f'Question with chat history: {question_with_chat_history}')
+
+            # get related documents
+            related_documents = self.indexer.similarity_search(question_with_chat_history, index_name=index_name)
+
+            # concatenate the documents
+            documents = self.concatenate_documents(related_documents)
+
+            logger.debug(f'Concatenated documents: {documents}')
+
+            chat_prompt = ChatPromptTemplate.from_messages(
+                [SYSTEM_MESSAGE_PROMPT_QA_W_HISTORY, HUMAN_MESSAGE_PROMPT_QA_W_HISTORY]
+            )
+
+            # get a chat completion from the formatted messages
+            answer = self.llm(
+                chat_prompt.format_prompt(
+                    summary=documents,
+                    chat_history=chat_history,
+                    question=question, 
+                ).to_messages()
+            ).content
         
         # Add the question and answer to the history
-        max_sequence_num = self.history_manager.get_max_sequence_num(message.session_id)
 
         question_message = message
         question_message.sequence_num = max_sequence_num + 1
-        question_message.timestamp = datetime.now()
+        question_message.received_timestamp = received_timestamp
+        question_message.responded_timestamp = datetime.now()
         question_message.is_bot = False
 
         answer_message = Message(
             text=answer,
             session_id=message.session_id,
             sequence_num=max_sequence_num + 2,
-            timestamp=datetime.now(),
+            received_timestamp=received_timestamp,
+            responded_timestamp=datetime.now(),
             user_id=message.user_id,
             is_bot=True
         )
@@ -181,7 +233,7 @@ class LLMChatBot:
         self.history_manager.add_message(question_message)
         self.history_manager.add_message(answer_message)
 
-        return answer
+        return answer_message
     
     def concatenate_documents(self, documents: List[str]) -> str:
         """Concatenate the documents.
@@ -220,4 +272,13 @@ class LLMChatBot:
         """
 
         raise NotImplementedError
+    
+    def get_chat_history(self, session_id: str) -> List[Message]:
+        """Get the chat history for a session.
+        
+        Args:
+            session_id: the session id
+        """
+
+        return self.history_manager.get_all_messages(session_id)
     

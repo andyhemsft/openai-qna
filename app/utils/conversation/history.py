@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.config import Config
@@ -44,7 +45,8 @@ class HistoryManager:
         metadata = {
             'session_id': message.session_id,
             'sequence_num': message.sequence_num,
-            'timestamp': message.timestamp,
+            'received_timestamp': message.received_timestamp,
+            'responded_timestamp': message.responded_timestamp,
             'user_id': message.user_id,
             'is_bot': message.is_bot
         }
@@ -121,14 +123,21 @@ class HistoryManager:
 
         return messages
 
-    def get_max_sequence_num(self, session_id: str) -> int:
-        """Get the max sequence number."""
+    def get_max_sequence_num_and_earliest_time(self, session_id: str) -> int:
+        """Get the max sequence number and first timestamp.
+        
+        Args:
+            session_id: the session id
+        Returns:
+            the max sequence number and first timestamp
+        """
+
         messages = self.get_all_messages(session_id, reverse=True)
 
         if len(messages) == 0:
-            return 0
+            return 0, datetime.now()
         else:
-            return messages[0].sequence_num
+            return messages[0].sequence_num, messages[-1].received_timestamp
 
     def from_doc_to_message(self, doc) -> Message:
         """
@@ -144,7 +153,8 @@ class HistoryManager:
             text=doc[0].page_content,
             session_id=doc[0].metadata['session_id'],
             sequence_num=doc[0].metadata['sequence_num'],
-            timestamp=doc[0].metadata['timestamp'],
+            received_timestamp=doc[0].metadata['received_timestamp'],
+            responded_timestamp=doc[0].metadata['responded_timestamp'],
             user_id=doc[0].metadata['user_id'],
             is_bot=doc[0].metadata['is_bot']
         )

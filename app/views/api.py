@@ -114,8 +114,8 @@ def chat_session():
 
     if request.method == 'POST':
         # Create chat session
-        session_id = llm_chat_bot.initialize_session(user_meta=request.json)
-        return jsonify({'session_id': session_id})
+        initial_message = llm_chat_bot.initialize_session(user_meta=request.json)
+        return jsonify({'session': initial_message.to_json()})
 
     else:
         raise ValueError('Method not supported')
@@ -132,18 +132,23 @@ def chat_answer():
         message = Message(
             text=request.json['question'],
             session_id=request.json['session_id'],
-            sequence_num=None, # Sequence number is set in the backend
-            timestamp=None, # Timestamp is set in the backend
             user_id=request.json['user_id'],
             is_bot=False # This is a user message
         )
 
+        # Whether to condense the question to the a standalone question
+        # based on the chat history
+        condense_question = True
+        if 'condense_question' in request.json:
+            condense_question = request.json['condense_question']
+
         answer = llm_chat_bot.get_semantic_answer(
             message=message,
-            index_name=request.json['index_name']
+            index_name=request.json['index_name'],
+            condense_question=condense_question
         )
         
-        return jsonify({'answer': answer})
+        return jsonify({'answer': answer.to_json()})
 
     else:
         raise ValueError('Method not supported')
@@ -154,13 +159,26 @@ def chat_history():
         Handle chat history
     """
 
-    config = Config()
-    indexer = get_indexer(config)
-
     if request.method == 'GET':
         # Return chat history
         
-        return 'Chat history'
+        history = llm_chat_bot.get_chat_history(request.json['session_id'])
+        return jsonify({'history': [chat.to_json() for chat in history]})
+
+    else:
+        raise ValueError('Method not supported')
+    
+@app.route(API_PREFIX('/chat/reload_index'), methods=['POST'])
+def chat_reload_index():
+    """
+        Handle chat reload index
+    """
+
+    if request.method == 'POST':
+        # Reload index
+        
+        llm_chat_bot.reload_index()
+        return jsonify({'data': 'Index reloaded'})
 
     else:
         raise ValueError('Method not supported')

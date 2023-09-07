@@ -12,7 +12,8 @@ test_messages = [
         text="Hello, Chatbot!",
         session_id="1",
         sequence_num=1,
-        timestamp="2021-01-01 00:00:00",
+        received_timestamp="2021-01-01 00:00:00",
+        responded_timestamp="2021-01-01 00:00:00",
         user_id="1",
         is_bot=False
     ),
@@ -21,7 +22,8 @@ test_messages = [
         text="Hello, User!",
         session_id="1",
         sequence_num=2,
-        timestamp="2021-01-01 00:00:01",
+        received_timestamp="2021-01-01 00:00:01",
+        responded_timestamp="2021-01-01 00:00:01",
         user_id="1",
         is_bot=True
     ),
@@ -30,7 +32,8 @@ test_messages = [
         text="What can you do?",
         session_id="1",
         sequence_num=3,
-        timestamp="2021-01-01 00:00:02",
+        received_timestamp="2021-01-01 00:00:02",
+        responded_timestamp="2021-01-01 00:00:02",
         user_id="1",
         is_bot=False
     ),
@@ -39,7 +42,8 @@ test_messages = [
         text="I can answer your questions.",
         session_id="1",
         sequence_num=4,
-        timestamp="2021-01-01 00:00:03",
+        received_timestamp="2021-01-01 00:00:03",
+        responded_timestamp="2021-01-01 00:00:03",
         user_id="1",
         is_bot=True
     ),
@@ -48,7 +52,8 @@ test_messages = [
         text="Hello, Chatbot!",
         session_id="2",
         sequence_num=1,
-        timestamp="2021-01-01 00:00:00",
+        received_timestamp="2021-01-01 00:00:00",
+        responded_timestamp="2021-01-01 00:00:00",
         user_id="1",
         is_bot=False
     ),
@@ -57,7 +62,8 @@ test_messages = [
         text="Hello, Alice!",
         session_id="2",
         sequence_num=2,
-        timestamp="2021-01-01 00:00:01",
+        received_timestamp="2021-01-01 00:00:01",
+        responded_timestamp="2021-01-01 00:00:01",
         user_id="1",
         is_bot=True
     ),
@@ -66,7 +72,8 @@ test_messages = [
         text="What can you do?",
         session_id="2",
         sequence_num=3,
-        timestamp="2021-01-01 00:00:02",
+        received_timestamp="2021-01-01 00:00:02",
+        responded_timestamp="2021-01-01 00:00:02",
         user_id="1",
         is_bot=False
     ),
@@ -75,7 +82,8 @@ test_messages = [
         text="I can answer your questions.",
         session_id="2",
         sequence_num=4,
-        timestamp="2021-01-01 00:00:03",
+        received_timestamp="2021-01-01 00:00:03",
+        responded_timestamp="2021-01-01 00:00:03",
         user_id="1",
         is_bot=True
     )

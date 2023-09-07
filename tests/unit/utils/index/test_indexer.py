@@ -87,3 +87,19 @@ def test_similarity_search(indexer):
 
         assert len(result) > 0
         assert result[0][0].page_content == "This is a test document only."
+
+    
+    # Complicated test case
+    # Test query
+    query = "Do you know who is Michael Jordan?"
+
+    for key in indexer:
+        documents = ['samples/A.txt', 'samples/B.txt', 'samples/C.txt']
+
+        for doc in documents:
+            indexer[key].add_document(doc, index_name='test')
+
+        result = indexer[key].similarity_search(query, k = 1, index_name = 'test')
+
+        logger.info(result[0][0].page_content)
+        assert len(result) > 0

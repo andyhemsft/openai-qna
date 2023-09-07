@@ -22,15 +22,16 @@ def test_api_session(client):
     response = client.post("/api/chat/session", json={'user_id': 'test_user_id'})
 
     logger.info(response.json)
-    assert "session_id" in response.json
+    assert "session" in response.json
 
 def test_api_chat(client):
     """Test API chat"""
 
+    # Test case 1
     test_json = {'user_id': 'test_user_id'}
     response = client.post("/api/chat/session", json=test_json)
 
-    session_id = response.json['session_id']
+    session_id = response.json['session']['session_id']
 
     test_json = {'session_id': session_id, 
                  'question': 'Hello!', 
@@ -40,6 +41,33 @@ def test_api_chat(client):
 
     logger.info(response.json)
     assert "answer" in response.json
+
+    # Test case 2
+    # Let us index a document first
+    indexer = get_indexer(Config())
+    index_name = 'test_index'
+
+    documents = ['samples/A.txt', 'samples/B.txt', 'samples/C.txt']
+
+    for doc in documents:
+        indexer.add_document(doc, index_name=index_name)
+
+    test_json = {
+                    'session_id': session_id,
+                    'question': 'Do you know who is Michael Jordan?',
+                    'user_id': 'test_user_id',
+                    'index_name': index_name
+                }
+    
+    response = client.post("/api/chat/answer", json=test_json)
+
+    logger.info(response.json)
+    assert "answer" in response.json
+
+    # Remove the test index
+    config = Config()
+    indexer = get_indexer(config)
+    indexer.drop_all_indexes()
 
 def test_api_parse_document(client):
     """Test API parse document"""
@@ -56,6 +84,19 @@ def test_api_parse_document(client):
     # Remove the test output file
     os.remove(sample_dest_url)
 
+def test_api_get_chat_history(client):
+    """Test API get chat history"""
+
+    test_json = {'user_id': 'test_user_id'}
+    response = client.post("/api/chat/session", json=test_json)
+
+    session_id = response.json['session']['session_id']
+
+    test_json = {'session_id': session_id}
+    response = client.get("/api/chat/history", json=test_json)
+
+    logger.info(response.json)
+    assert "history" in response.json
 
 def test_api_index_document(client):
     """Test API index document"""

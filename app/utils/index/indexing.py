@@ -154,6 +154,10 @@ class FixedChunkIndexer(Indexer):
         """This function performs a similarity search.
         
         """
+        # First load the index from local file if it is a faiss vector store
+        if self.config.VECTOR_STORE_TYPE == 'faiss':
+            self.vector_store.load_local(self.config.FAISS_LOCAL_FILE_INDEX)
+
         return self.vector_store.similarity_search(query, k, filter=filter, index_name=index_name)
     
     def create_index(self, index_name: str) -> None:
