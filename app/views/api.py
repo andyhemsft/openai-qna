@@ -138,7 +138,7 @@ def chat_answer():
 
         # Whether to condense the question to the a standalone question
         # based on the chat history
-        condense_question = True
+        condense_question = False
         if 'condense_question' in request.json:
             condense_question = request.json['condense_question']
 

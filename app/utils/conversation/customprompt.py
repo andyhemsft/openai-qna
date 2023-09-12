@@ -33,9 +33,10 @@ If the question is a greeting, reply with a greeting and ask what I can help.
 """
 
 human_question_template_qa_wo_history = """
-Summary: {summary}
-Question: {question}
-Answer:"""
+Summary: 
+{summary}
+Human:{question}
+AI:"""
 
 SYSTEM_MESSAGE_PROMPT_QA_WO_HISTORY = SystemMessagePromptTemplate.from_template(system_message_template_qa_wo_history)
 HUMAN_MESSAGE_PROMPT_QA_WO_HISTORY = HumanMessagePromptTemplate.from_template(human_question_template_qa_wo_history)
@@ -51,10 +52,12 @@ If the question is a greeting, reply with a greeting and ask what I can help.
 """
 
 human_question_template_qa_w_history = """
-Summary: {summary}
-Prior conversations: {chat_history}
-Question: {question}
-Answer:"""
+Summary: 
+{summary}
+Prior conversations: 
+{chat_history}
+Human:{question}
+AI:"""
 
 SYSTEM_MESSAGE_PROMPT_QA_W_HISTORY = SystemMessagePromptTemplate.from_template(system_message_template_qa_w_history)
 HUMAN_MESSAGE_PROMPT_QA_W_HISTORY = HumanMessagePromptTemplate.from_template(human_question_template_qa_w_history)

@@ -83,6 +83,17 @@ class LLMChatBot:
         # TODO: implement this by replacing the glossary with the standard one
         return question
 
+    def concatenate_chat_history(self, chat_history: List[Message]) -> str:
+        """Concatenate the chat history.
+        
+        Args:
+            chat_history: the chat history
+        """
+
+        chat_history_concatenated = '\n'.join(["AI:"+chat.text if chat.is_bot else "Human:"+chat.text for chat in chat_history])
+        logger.debug(f'Chat history concatenated: {chat_history_concatenated}')
+
+        return chat_history_concatenated
     
     def rephrase_question(self, question: str, chat_history: List[Message]) -> str:
         """Rephrase the question based on the chat history.
@@ -99,7 +110,8 @@ class LLMChatBot:
             [SYSTEM_MESSAGE_PROMPT_REPHRASE_Q, HUMAN_MESSAGE_PROMPT_REPHRASE_Q]
         )
 
-        chat_history_concatenated = '\n'.join([chat.text for chat in chat_history])
+        # chat_history_concatenated = '\n'.join([chat.text for chat in chat_history])
+        chat_history_concatenated = self.concatenate_chat_history(chat_history)
         logger.debug(f'Chat history concatenated: {chat_history_concatenated}')
 
         # get a chat completion from the formatted messages
@@ -166,13 +178,14 @@ class LLMChatBot:
             logger.debug(f'Concatenated documents: {documents}')
 
             chat_prompt = ChatPromptTemplate.from_messages(
-                [SYSTEM_MESSAGE_PROMPT_QA_WO_HISTORY, HUMAN_MESSAGE_PROMPT_QA_WO_HISTORY]
+                [SYSTEM_MESSAGE_PROMPT_QA_W_HISTORY, HUMAN_MESSAGE_PROMPT_QA_W_HISTORY]
             )
 
             # get a chat completion from the formatted messages
             answer = self.llm(
                 chat_prompt.format_prompt(
                     summary=documents,
+                    chat_history=chat_history,
                     question=question, 
                 ).to_messages()
             ).content
@@ -181,7 +194,8 @@ class LLMChatBot:
         else:
             logger.info("Don't condense the question")
 
-            chat_history = '\n'.join([chat.text for chat in chat_history])
+            # chat_history = '\n'.join([chat.text for chat in chat_history])
+            chat_history = self.concatenate_chat_history(chat_history)
             question_with_chat_history = f'{chat_history}\n{question}'
 
             logger.debug(f'Question with chat history: {question_with_chat_history}')

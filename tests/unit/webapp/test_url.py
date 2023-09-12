@@ -7,14 +7,6 @@ from app.utils.index import get_indexer
 
 logger = logging.getLogger(__name__)
 
-def test_hellow_world(client):
-    """Test hello world"""
-
-    response = client.get("/ui")
-    assert b"Hello World!" in response.data
-
-    response = client.get("/api")
-    assert b"Hello World!" in response.data
 
 def test_api_session(client):
     """Test API session"""

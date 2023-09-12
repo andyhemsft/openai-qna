@@ -72,7 +72,8 @@ class HistoryManager:
         messages = []
         for doc in documents:
             message = self.from_doc_to_message(doc)
-            messages.append(message)
+            if message.sequence_num > 0: # The 0 sequence number is a placeholder
+                messages.append(message)
         
         # TODO: We need to also log the matches in log anlytics for performance investigation
 
@@ -100,7 +101,8 @@ class HistoryManager:
         messages = []
         for doc in documents:
             message = self.from_doc_to_message(doc)
-            messages.append((message.sequence_num, message))
+            if message.sequence_num > 0: # The 0 sequence number is a placeholder
+                messages.append((message.sequence_num, message))
 
         messages.sort(key=lambda x: x[0], reverse=reverse)
 
