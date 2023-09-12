@@ -1,14 +1,13 @@
 import os, logging 
 
 # Flask modules
-from flask import url_for, redirect
+from flask import render_template
 
 # App modules
 from app import app
 
 @app.route('/ui')
-def hello_ui():
-    '''
-        Print out hello world
-    '''
-    return 'Hello World!'
+def ui_home():
+    """Render the UI home page"""
+
+    return render_template('index.html')

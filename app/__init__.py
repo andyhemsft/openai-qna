@@ -10,6 +10,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Iinitialize the app
 app = Flask(__name__)
+app.static_folder = 'static'
 app.config.from_object('app.config.Config')
 
 # Import routing, models and Start the App
