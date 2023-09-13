@@ -31,6 +31,8 @@ class Config():
     OPENAI_EMBEDDING_ENGINE = os.getenv('OPENAI_EMBEDDING_ENGINE')
     OPENAI_TEMPERATURE = os.getenv('OPENAI_TEMPERATURE', 0.7)
     OPENAI_MAX_TOKENS = os.getenv('OPENAI_MAX_TOKENS', 1000)
+    # for text-embedding-ada-002 model , you will obtain a high-dimensional array (vector) consisting of 1536 floating-point numbers
+    OPENAI_EMBEDDING_SIZE = os.getenv('OPENAI_EMBEDDING_SIZE', 1536) 
 
     # Vector Store parameters
     VECTOR_STORE_TYPE = os.getenv('VECTOR_STORE_TYPE', 'faiss') # redis, azure, faiss

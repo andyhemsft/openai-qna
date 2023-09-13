@@ -1,9 +1,11 @@
 import os
 import logging
 from typing import List, Optional, Dict, Any, Tuple
+import faiss
 
 from langchain.docstore.document import Document
 from langchain.embeddings.base import Embeddings
+from langchain.docstore import InMemoryDocstore
 from langchain.vectorstores import FAISS as FAISS_TYPE
 
 from app.utils.vectorstore.base import BaseVectorStore
@@ -25,8 +27,14 @@ class FAISSExtended(BaseVectorStore):
 
         super().__init__(config, embeddings)
 
-        texts = ["FAISS"]
-        self.vector_store = FAISS_TYPE.from_texts(texts, embeddings)
+        # initialize the vector store
+        embedding_size = config.OPENAI_EMBEDDING_SIZE
+        index = faiss.IndexFlatL2(embedding_size)
+        embedding_fn = embeddings.embed_query
+        self.vector_store  = FAISS_TYPE(embedding_fn, index, InMemoryDocstore({}), {})
+
+        # texts = ["FAISS"]
+        # self.vector_store = FAISS_TYPE.from_texts(texts, embeddings)
 
     def load_local(self, file_path: str) -> None:
         """This function loads the vector store from a local file."""
