@@ -124,23 +124,24 @@ class LLMChatBot:
 
         return rephased_question
         
-    def get_semantic_answer(
+    def __get_semantic_answer_custom(
             self, 
             message: Message, 
             index_name: str = None, 
             condense_question: bool = True
         ) -> Message:
         """
-        Get the semantic answer.
+        Get the semantic answer using custom logic.
 
         Args:
             question: the question
-            session_id: the session id
             index_name: the index name
+            condense_question: whether to condense the question
         Returns:
             the answer
         """
-        # TODO: Detect if there are any PII data in the question
+
+         # TODO: Detect if there are any PII data in the question
 
         # Timestamp for recieving the question
         received_timestamp = datetime.now()
@@ -243,6 +244,52 @@ class LLMChatBot:
         self.history_manager.add_message(answer_message)
 
         return answer_message
+
+    def __get_semantic_answer_langchain(
+            self, 
+            message: Message, 
+            index_name: str = None, 
+            condense_question: bool = True
+        ) -> Message:
+        """
+        Get the semantic answer using langchain.
+        
+        Args:
+            question: the question
+            index_name: the index name
+            condense_question: whether to condense the question
+
+        Returns:
+            the answer
+        """
+
+    def get_semantic_answer(
+            self, 
+            message: Message, 
+            index_name: str = None, 
+            condense_question: bool = True,
+            conversation: str = 'custom' # 'custom' or 'langchain'
+        ) -> Message:
+        """
+        Get the semantic answer.
+
+        Args:
+            question: the question
+            index_name: the index name
+            condense_question: whether to condense the question
+            conversation: the conversation type
+        Returns:
+            the answer
+        """
+
+        if conversation == 'custom':
+            return self.__get_semantic_answer_custom(message, index_name, condense_question)
+        
+        elif conversation == 'langchain':
+            return self.__get_semantic_answer_langchain(message, index_name, condense_question)
+        
+        else:
+            raise ValueError('Conversation type not supported')
     
     def concatenate_documents(self, documents: List[str]) -> str:
         """Concatenate the documents.
