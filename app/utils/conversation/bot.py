@@ -3,12 +3,16 @@ from typing import List, Dict
 import uuid
 from datetime import datetime
 
+from langchain.chains.llm import LLMChain
+from langchain.chains.chat_vector_db.prompts import CONDENSE_QUESTION_PROMPT
+from langchain.chains import ConversationalRetrievalChain
+from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 
 from app.config import Config
 from app.utils.conversation.history import HistoryManager
 from app.utils.llm import LLMHelper
 from app.utils.conversation.customprompt import *
-from app.utils.conversation import Message
+from app.utils.conversation import Message, Answer, Source
 from app.utils.index import get_indexer
 
 
@@ -90,8 +94,8 @@ class LLMChatBot:
             chat_history: the chat history
         """
 
-        chat_history_concatenated = '\n'.join(["AI:"+chat.text if chat.is_bot else "Human:"+chat.text for chat in chat_history])
-        logger.debug(f'Chat history concatenated: {chat_history_concatenated}')
+        chat_history_concatenated = '\n'.join([chat.text for chat in chat_history])
+        # logger.debug(f'Chat history concatenated: {chat_history_concatenated}')
 
         return chat_history_concatenated
     
@@ -112,7 +116,7 @@ class LLMChatBot:
 
         # chat_history_concatenated = '\n'.join([chat.text for chat in chat_history])
         chat_history_concatenated = self.concatenate_chat_history(chat_history)
-        logger.debug(f'Chat history concatenated: {chat_history_concatenated}')
+        # logger.debug(f'Chat history concatenated: {chat_history_concatenated}')
 
         # get a chat completion from the formatted messages
         rephased_question = self.llm(
@@ -123,13 +127,33 @@ class LLMChatBot:
         ).content
 
         return rephased_question
-        
-    def __get_semantic_answer_custom(
+
+    def get_chat_history(self, question: str, session_id: str, search_type: str) -> List[Message]:
+        """
+        Get the chat history.
+
+        Args:
+            session_id: the session id
+            search_type: the search type
+        Returns:
+            the chat history
+        """
+
+        if search_type == 'most_recent':
+            return self.history_manager.get_k_most_recent_messages(session_id=session_id)
+
+        elif search_type == 'most_related':
+            return self.history_manager.get_k_most_related_messages(query=question, session_id=session_id)
+
+        else:  
+            NotImplementedError
+
+    def _get_semantic_answer_custom(
             self, 
             message: Message, 
             index_name: str = None, 
             condense_question: bool = True
-        ) -> Message:
+        ) -> Answer:
         """
         Get the semantic answer using custom logic.
 
@@ -161,7 +185,7 @@ class LLMChatBot:
         # standardize the glossary
         question = self.standardize_glossary(message.text)
 
-        chat_history = self.history_manager.get_k_most_recent_messages(message.session_id, reverse=False)
+        chat_history = self.get_chat_history(question, message.session_id, self.config.CHAT_HISTORY_SEARCH_TYPE)
 
         # if condense question
         if condense_question:
@@ -176,7 +200,10 @@ class LLMChatBot:
             # concatenate the documents
             documents = self.concatenate_documents(related_documents)
 
-            logger.debug(f'Concatenated documents: {documents}')
+            # concatenate the chat history
+            chat_history = self.concatenate_chat_history(chat_history)
+
+            # logger.debug(f'Concatenated documents: {documents}')
 
             chat_prompt = ChatPromptTemplate.from_messages(
                 [SYSTEM_MESSAGE_PROMPT_QA_W_HISTORY, HUMAN_MESSAGE_PROMPT_QA_W_HISTORY]
@@ -195,7 +222,6 @@ class LLMChatBot:
         else:
             logger.info("Don't condense the question")
 
-            # chat_history = '\n'.join([chat.text for chat in chat_history])
             chat_history = self.concatenate_chat_history(chat_history)
             question_with_chat_history = f'{chat_history}\n{question}'
 
@@ -207,7 +233,7 @@ class LLMChatBot:
             # concatenate the documents
             documents = self.concatenate_documents(related_documents)
 
-            logger.debug(f'Concatenated documents: {documents}')
+            # logger.debug(f'Concatenated documents: {documents}')
 
             chat_prompt = ChatPromptTemplate.from_messages(
                 [SYSTEM_MESSAGE_PROMPT_QA_W_HISTORY, HUMAN_MESSAGE_PROMPT_QA_W_HISTORY]
@@ -240,17 +266,16 @@ class LLMChatBot:
             is_bot=True
         )
 
-        self.history_manager.add_message(question_message)
-        self.history_manager.add_message(answer_message)
+        self.history_manager.add_qa_pair(question_message, answer_message)
 
-        return answer_message
+        return Answer(answer_message, None)
 
-    def __get_semantic_answer_langchain(
+    def _get_semantic_answer_langchain(
             self, 
             message: Message, 
             index_name: str = None, 
             condense_question: bool = True
-        ) -> Message:
+        ) -> Answer:
         """
         Get the semantic answer using langchain.
         
@@ -262,6 +287,80 @@ class LLMChatBot:
         Returns:
             the answer
         """
+        # TODO: Detect if there are any PII data in the question
+
+        # Timestamp for recieving the question
+        received_timestamp = datetime.now()
+
+        max_sequence_num, earliest_time = self.history_manager.get_max_sequence_num_and_earliest_time(message.session_id)
+
+        # Check if the session is expired
+        if max_sequence_num >= self.config.CHATBOT_MAX_MESSAGES or \
+            (received_timestamp - earliest_time).total_seconds() > self.config.CHATBOT_SESSION_TIMEOUT:
+            # Exceed the maximum number of messages
+            # Restart the session
+            initial_message = self.initialize_session(user_meta={'user_id': message.user_id})
+
+            return initial_message
+
+
+        # standardize the glossary
+        question = self.standardize_glossary(message.text)
+
+        # Get the chat history
+        chat_history = self.get_chat_history(question, message.session_id, self.config.CHAT_HISTORY_SEARCH_TYPE)
+
+        chat_history = [c.text for c in chat_history] 
+
+        def get_chat_history(inputs) -> str:
+            """Get the chat history.
+            
+            Args:
+                inputs: the inputs
+            """
+
+            chat_history_concatenated = '\n'.join(chat_history)
+            return chat_history_concatenated
+
+        question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=True)
+        
+        doc_chain = load_qa_with_sources_chain(self.llm, chain_type="stuff", verbose=True, prompt=PROMPT)
+        chain = ConversationalRetrievalChain(
+            retriever=self.indexer.get_retriever(index_name=index_name),
+            question_generator=question_generator,
+            combine_docs_chain=doc_chain,
+            return_source_documents=True,
+            get_chat_history=get_chat_history,
+            verbose=True,
+            # top_k_docs_for_context= self.k
+        )
+
+        result = chain({"question": question, "chat_history": chat_history})
+
+        # Add the question and answer to the history
+
+        question_message = message
+        question_message.sequence_num = max_sequence_num + 1
+        question_message.received_timestamp = received_timestamp
+        question_message.responded_timestamp = datetime.now()
+        question_message.is_bot = False
+
+        result['answer'] = result['answer'].split('SOURCES:')[0].split('Sources:')[0].split('SOURCE:')[0].split('Source:')[0]
+
+        answer_message = Message(
+            text=result['answer'],
+            session_id=message.session_id,
+            sequence_num=max_sequence_num + 2,
+            received_timestamp=received_timestamp,
+            responded_timestamp=datetime.now(),
+            user_id=message.user_id,
+            is_bot=True
+        )
+
+        self.history_manager.add_qa_pair(question_message, answer_message)
+
+        return Answer(answer_message, None)
+        
 
     def get_semantic_answer(
             self, 
@@ -269,7 +368,7 @@ class LLMChatBot:
             index_name: str = None, 
             condense_question: bool = True,
             conversation: str = 'custom' # 'custom' or 'langchain'
-        ) -> Message:
+        ) -> Answer:
         """
         Get the semantic answer.
 
@@ -283,10 +382,10 @@ class LLMChatBot:
         """
 
         if conversation == 'custom':
-            return self.__get_semantic_answer_custom(message, index_name, condense_question)
+            return self._get_semantic_answer_custom(message, index_name, condense_question)
         
         elif conversation == 'langchain':
-            return self.__get_semantic_answer_langchain(message, index_name, condense_question)
+            return self._get_semantic_answer_langchain(message, index_name, condense_question)
         
         else:
             raise ValueError('Conversation type not supported')
@@ -329,7 +428,7 @@ class LLMChatBot:
 
         raise NotImplementedError
     
-    def get_chat_history(self, session_id: str) -> List[Message]:
+    def get_all_chat_history(self, session_id: str) -> List[Message]:
         """Get the chat history for a session.
         
         Args:

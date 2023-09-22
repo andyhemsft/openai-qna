@@ -103,3 +103,21 @@ def test_similarity_search(indexer):
 
         logger.info(result[0][0].page_content)
         assert len(result) > 0
+
+def test_get_retriever(indexer):
+    """This function tests get retriever function."""
+
+    query = "Do you know who is Michael Jordan?"
+
+    for key in indexer:
+        documents = ['samples/A.txt', 'samples/B.txt', 'samples/C.txt']
+
+        for doc in documents:
+            indexer[key].add_document(doc, index_name='test')
+
+        retriever = indexer[key].get_retriever(index_name='test')
+
+        result = retriever.get_relevant_documents(query)
+
+        logger.info(result[0].page_content)
+        assert len(result) > 0

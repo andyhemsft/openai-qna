@@ -4,6 +4,8 @@ import pytest
 import shutil
 
 from langchain.docstore.document import Document
+from langchain.document_loaders import TextLoader
+from langchain.text_splitter import TokenTextSplitter
 
 from app.utils.llm import LLMHelper
 from app.utils.vectorstore import get_vector_store
@@ -126,5 +128,28 @@ def test_similarity_search(vector_store):
             assert result[0][0].page_content == "This is a test document from web."
             assert result[0][0].metadata["source"] == "web"
 
+def test_get_retiever(vector_store):
+    """This function tests get retiever function for vector store."""
 
+    text_splitter = TokenTextSplitter(chunk_size=2000, chunk_overlap=500)
+    document_A = TextLoader('samples/A.txt', encoding = 'utf-8').load()
+    document_B = TextLoader('samples/B.txt', encoding = 'utf-8').load()
+    document_C = TextLoader('samples/C.txt', encoding = 'utf-8').load()
+
+    documents = [document_A, document_B, document_C]
+    query = "Who is Elon Musk?"
+
+    for key, vector_store in vector_store.items():
+        if key == 'faiss':
+            for doc in documents:
+                chunks = text_splitter.split_documents(doc)
+                vector_store.add_documents(chunks)
+
+            retriver = vector_store.get_retriever()
+
+            result = retriver.get_relevant_documents(query)
+
+            assert len(result) > 0
+            
+            logger.info(result[0].page_content)
     

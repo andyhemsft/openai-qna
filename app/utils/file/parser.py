@@ -1,11 +1,13 @@
 import os
 import logging
+from openpyxl import load_workbook
 from abc import abstractmethod
 
 from langchain.document_loaders import PyPDFLoader
 from app.utils.file.blobstorage import BlobStorageClient
 from app.config import Config
 
+logger = logging.getLogger(__name__)
 
 class Parser():
     """This class represents a Parser."""
@@ -59,9 +61,69 @@ def get_parser(document_type: str) -> Parser:
     config = Config()
     if document_type == 'pdf':
         return PDFParser(config=config)
+    
+    elif document_type == 'excel':
+        return ExcelParser(config=config)
 
     else:
         raise ValueError('Parser type not supported')
+
+class ExcelParser(Parser):
+    """This class represents an Excel Parser."""
+
+    def __init__(self, config: Config):
+        super().__init__(config)
+
+    def analyze_read(self, source_url: str) -> str:
+        """
+        Analyze and read source url for an Excel using openpyxl.
+        Unmerging the cells and assigning the value as top-left cell.
+
+        Args:
+            source_url: the source url
+        Returns:
+            the parsed text
+        """
+
+        wb = load_workbook(source_url)
+
+        sheets = wb.sheetnames  ##['Sheet1', 'Sheet2']
+        for i, sheet in enumerate(sheets):
+            ws = wb[sheets[i]]
+            
+            # you need a separate list to iterate on (see explanation #2 below)
+            mergedcells =[]  
+            for group in ws.merged_cells.ranges:
+                mergedcells.append(group)
+            
+            for group in mergedcells:
+                min_col, min_row, max_col, max_row = group.bounds 
+                top_left_cell_value = ws.cell(row=min_row, column=min_col).value
+                ws.unmerge_cells(str(group))   # you need to unmerge before writing (see explanation #1 below)
+                for irow in range(min_row, max_row+1):
+                    for jcol in range(min_col, max_col+1): 
+                        ws.cell(row = irow, column = jcol, value = top_left_cell_value)
+        
+        content = ''
+        for i, sheet in enumerate(sheets):
+            ws = wb[sheets[i]]
+            
+            for row in ws.values:
+
+                l = list(row)
+                for i in range(len(l)):
+                    if l[i] == None:
+                        continue
+                    if i == len(l) - 1:
+                        content = content + (str(l[i]).replace('\n', ' '))
+                        break
+                    else:
+                        content = content + (str(l[i]).replace('\n', ' ') + ' | ')
+                content = content + '\n'
+            
+        return content
+    
+    
 
 class PDFParser(Parser):
     """This class represents a PDF Parser."""
@@ -84,6 +146,27 @@ class PDFParser(Parser):
 
         else:
             raise ValueError('PDF Parser type not supported')
+        
+    def _extract_tables(self, source_url: str) -> str:
+        """Extract table from source url.
+        
+        Args:
+            source_url: the source url
+        Returns:
+            the tables
+        """
+
+        # # tables = tabula.read_pdf(source_url, pages="all")
+        # tables = camelot.read_pdf(source_url)
+
+        # logger.info("Total tables extracted: {}".format(len(tables)))
+
+        # for i, table in enumerate(tables, start=1):
+        #     # logger.info(f'Table {i}:\n{table.to_string()}')
+        #     logger.info(f'Table {i}:\n{table.df.to_string()}')
+
+        return "Not implemented yet"
+
 
     def analyze_read(self, source_url: str) -> str:
         """

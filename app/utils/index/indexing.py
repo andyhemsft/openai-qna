@@ -7,6 +7,7 @@ import shutil
 from langchain.document_loaders import TextLoader, WebBaseLoader
 from langchain.text_splitter import TokenTextSplitter
 from langchain.docstore.document import Document
+from langchain.vectorstores.base import VectorStoreRetriever
 
 from app.utils.vectorstore import get_vector_store
 from app.config import Config
@@ -75,6 +76,17 @@ class Indexer:
         Returns:
             none
         """
+        
+    def get_retriever(self, index_name: Optional[str] = None) -> VectorStoreRetriever:
+        """This function gets the retriever.
+        
+        Args:
+            index_name: the index name
+        Returns:
+            the retriever
+        """
+
+        return self.vector_store.get_retriever(index_name)
 
 class FixedChunkIndexer(Indexer):
     """This class represents a Fixed Chunk Indexer."""
