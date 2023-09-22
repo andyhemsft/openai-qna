@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class Config():
@@ -29,7 +29,7 @@ class Config():
     OPENAI_API_VERSION = os.getenv('OPENAI_API_VERSION', '2023-05-15')
     OPENAI_ENGINE = os.getenv('OPENAI_ENGINE')
     OPENAI_EMBEDDING_ENGINE = os.getenv('OPENAI_EMBEDDING_ENGINE')
-    OPENAI_TEMPERATURE = os.getenv('OPENAI_TEMPERATURE', 0.7)
+    OPENAI_TEMPERATURE = os.getenv('OPENAI_TEMPERATURE', 0.1) # Low temperature (temperature 0.1) to ensure reproducibility.
     OPENAI_MAX_TOKENS = os.getenv('OPENAI_MAX_TOKENS', 1000)
     # for text-embedding-ada-002 model , you will obtain a high-dimensional array (vector) consisting of 1536 floating-point numbers
     OPENAI_EMBEDDING_SIZE = os.getenv('OPENAI_EMBEDDING_SIZE', 1536) 
@@ -48,8 +48,14 @@ class Config():
     REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
 
     # Parser parameters
+    SUPPORTED_DOCUMENT_TYPES = set(['pdf', 'excel'])
+
     PDF_PARSER_TYPE = os.getenv('PDF_PARSER_TYPE', 'pdfloader') # pdfloader, formrecognizer
     DOCUMENT_DEST_LOCATION = os.getenv('DOCUMENT_DEST_LOCATION', 'local') # local, azure
+
+    FORM_RECOGNIZER_ENDPOINT = os.getenv('FORM_RECOGNIZER_ENDPOINT')
+    FORM_RECOGNIZER_KEY = os.getenv('FORM_RECOGNIZER_KEY')
+
 
     # Azure Blob Storage parameters
     BLOB_ACCOUNT_NAME = os.getenv('BLOB_ACCOUNT_NAME')
@@ -61,3 +67,8 @@ class Config():
     CHUNKING_STRATEGY = os.getenv('CHUNKING_STRATEGY', 'fixed') # fixed, two-layer
     CHUNKING_STRATEGY_MAX_LENGTH = os.getenv('CHUNKING_STRATEGY_MAX_LENGTH', 2000)
     CHUNKING_STRATEGY_OVERLAP = os.getenv('CHUNKING_STRATEGY_OVERLAP', 400)
+
+    # Similarity threshold parameters
+    CHAT_HISTORY_SEARCH_TYPE = os.getenv('CHAT_HISTORY_SEARCH_TYPE', 'most_related') # most_related, most_recent
+    CHAT_HISTORY_SIMILARITY_THRESHOLD = os.getenv('CHAT_HISTORY_SIMILARITY_THRESHOLD', 0)
+    DOCUMENT_SIMILARITY_THRESHOLD = os.getenv('DOCUMENT_SIMILARITY_THRESHOLD', 0.5)

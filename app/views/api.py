@@ -142,11 +142,16 @@ def chat_answer():
         if 'condense_question' in request.json:
             condense_question = request.json['condense_question']
 
+        conversation = 'custom'
+        if 'conversation' in request.json:
+            conversation = request.json['conversation']
+
         answer = llm_chat_bot.get_semantic_answer(
             message=message,
             index_name=request.json['index_name'],
-            condense_question=condense_question
-        )
+            condense_question=condense_question,
+            conversation=conversation
+        ).message
         
         return jsonify({'answer': answer.to_json()})
 
@@ -162,7 +167,7 @@ def chat_history():
     if request.method == 'GET':
         # Return chat history
         
-        history = llm_chat_bot.get_chat_history(request.json['session_id'])
+        history = llm_chat_bot.get_all_chat_history(request.json['session_id'])
         return jsonify({'history': [chat.to_json() for chat in history]})
 
     else:

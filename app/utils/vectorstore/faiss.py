@@ -7,6 +7,7 @@ from langchain.docstore.document import Document
 from langchain.embeddings.base import Embeddings
 from langchain.docstore import InMemoryDocstore
 from langchain.vectorstores import FAISS as FAISS_TYPE
+from langchain.vectorstores.base import VectorStoreRetriever
 
 from app.utils.vectorstore.base import BaseVectorStore
 from app.config import Config
@@ -137,4 +138,14 @@ class FAISSExtended(BaseVectorStore):
         """
 
         logger.warning('FAISS does not support dropping indexes')
+
+
+    def get_retriever(self, index_name: Optional[str] = None) -> VectorStoreRetriever:
+        """This function returns a retriever object."""
+
+        logger.warning('FAISS does not support index name parameter')
+
+        # Make sure we load it before using it
+        self.load_local(self.config.FAISS_LOCAL_FILE_INDEX)
+        return self.vector_store.as_retriever()
 

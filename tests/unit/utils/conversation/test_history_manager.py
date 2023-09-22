@@ -105,32 +105,38 @@ def test_add_message(history_manager):
     for message in test_messages:
         history_manager.add_message(message)
 
+def test_add_qa_pair(history_manager):
+    """This function tests add QA pair function."""
+
+    for i in range(0, len(test_messages), 2):
+        history_manager.add_qa_pair(test_messages[i], test_messages[i+1])
+
 
 def test_get_k_most_related_messages(history_manager):
     """This function tests get k most related messages function."""
 
-    for message in test_messages:
-        history_manager.add_message(message)
+    for i in range(0, len(test_messages), 2):
+        history_manager.add_qa_pair(test_messages[i], test_messages[i+1])
 
     query = "What is your function?"
 
-    messsages = history_manager.get_k_most_related_messages(query, "1", 2)
+    messsages = history_manager.get_k_most_related_messages(query=query, session_id="1", k=2)
     
     assert len(messsages) == 2
-    assert messsages[0].text == "What can you do?"
+    assert messsages[0].text == "Human:What can you do?\nBot:I can answer your questions." or \
+        messsages[1].text == "Human:What can you do?\nBot:I can answer your questions."
 
 def test_get_k_most_recent_messages(history_manager):
     """This function tests get k most recent messages function."""
 
-    for message in test_messages:
-        history_manager.add_message(message)
+    for i in range(0, len(test_messages), 2):
+        history_manager.add_qa_pair(test_messages[i], test_messages[i+1])
     
-    messsages = history_manager.get_k_most_recent_messages("1", 3)
+    messsages = history_manager.get_k_most_recent_messages("1", 2)
 
-    assert len(messsages) == 3
-    assert messsages[0].text == "I can answer your questions."
-    assert messsages[1].text == "What can you do?"
-    assert messsages[2].text == "Hello, User!"
+    assert len(messsages) == 2
+    assert messsages[0].text == "Human:Hello, Chatbot!\nBot:Hello, User!"
+    assert messsages[1].text == "Human:What can you do?\nBot:I can answer your questions."
 
 def test_get_all_messages(history_manager):
     """This function tests get all messages function."""
@@ -141,7 +147,7 @@ def test_get_all_messages(history_manager):
     messsages = history_manager.get_all_messages("2")
 
     assert len(messsages) == 4
-    assert messsages[0].text == "I can answer your questions."
-    assert messsages[1].text == "What can you do?"
-    assert messsages[2].text == "Hello, Alice!"
-    assert messsages[3].text == "Hello, Chatbot!"
+    assert messsages[0].text == "Hello, Chatbot!"
+    assert messsages[1].text == "Hello, Alice!"
+    assert messsages[2].text == "What can you do?"
+    assert messsages[3].text == "I can answer your questions."

@@ -6,3 +6,7 @@ azure-storage-blob==12.17.0
 openai==0.28.0
 tiktoken==0.4.0
 faiss-cpu==1.7.4
+azure-ai-formrecognizer==3.3.0
+# camelot-py[cv]==0.9.0 It is not better than form recognizer
+# PyPDF2==2.12.1
+# tabula-py==2.8.1 It is not better than form recognizer

@@ -41,4 +41,22 @@ class Message:
             'user_id': self.user_id,
             'is_bot': self.is_bot
         }
-    
+
+class Source:
+    """This class represents a Source."""
+
+    def __init__(self):
+        pass
+
+class Answer:
+    """This class represents an Answer."""
+
+    def __init__(self, message: Message, source: Source):
+        """Initialize the Answer.
+        
+        Args:
+            message: the message
+            source: the source
+        """
+        self.message = message
+        self.source = source

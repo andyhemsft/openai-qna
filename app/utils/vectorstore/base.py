@@ -3,6 +3,7 @@ from abc import abstractmethod
 
 from langchain.embeddings.base import Embeddings
 from langchain.docstore.document import Document
+from langchain.vectorstores.base import VectorStoreRetriever
 
 from app.config import Config
 
@@ -75,6 +76,16 @@ class BaseVectorStore:
     @abstractmethod
     def create_index(self, index_name: str) -> None:
         """This function creates an index.
+        
+        Args:
+            index_name: the index name
+        Returns:
+            none
+        """
+
+    @abstractmethod
+    def get_retriever(self, index_name: Optional[str] = None) -> VectorStoreRetriever:
+        """This function gets a retriever.
         
         Args:
             index_name: the index name

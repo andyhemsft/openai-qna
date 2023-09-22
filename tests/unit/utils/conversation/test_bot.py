@@ -1,12 +1,14 @@
 import logging
 import pytest
+import langchain
+
 
 from app.config import Config
 from app.utils.conversation.bot import LLMChatBot
 from app.utils.conversation import Message
 
 logger = logging.getLogger(__name__)
-
+langchain.verbose = True
 
 @pytest.fixture()
 def llm_chat_bot():
@@ -94,6 +96,9 @@ def test_concantenate_documents(llm_chat_bot) -> None:
     
     pass
 
+def test_get_chat_history(llm_chat_bot) -> None:
+
+    pass
 
 def test_get_semantic_answer(llm_chat_bot) -> None:
     """This function tests get semantic answer function."""
@@ -107,51 +112,96 @@ def test_get_semantic_answer(llm_chat_bot) -> None:
 
     message = Message(
         text='What is the capital of France?',
-        session_id='test_session_id'
+        session_id='test_session_id_1_1'
     )
-
     answer = llm_chat_bot.get_semantic_answer(
                 message,
                 index_name = None, 
-                condense_question = True)
+                condense_question = True).message
 
-    logging.info(f'Answer 1: {answer.text}')
+    logging.info(f'Answer 1 (custom): {answer.text}')
+
+    message = Message(
+        text='What is the capital of France?',
+        session_id='test_session_id_1_2'
+    )
+    answer = llm_chat_bot.get_semantic_answer(
+                message,
+                index_name = None, 
+                condense_question = True,
+                conversation = 'langchain').message
+
+    logging.info(f'Answer 1 (langchain): {answer.text}')
+
 
     # Test case 2
     message = Message(
-        text="Who is a better writer, Elon Musk or Shakespeare?",
-        session_id='test_session_id'
+        text="Who is MJ?",
+        session_id='test_session_id_2_1'
     )
-
     answer = llm_chat_bot.get_semantic_answer(
                 message, 
                 index_name = None, 
-                condense_question = True)
+                condense_question = True).message
 
-    logging.info(f'Answer 2: {answer.text}')
+    logging.info(f'Answer 2 (custom): {answer.text}')
+
+    message = Message(
+        text="Who is MJ?",
+        session_id='test_session_id_2_2'
+    )
+    answer = llm_chat_bot.get_semantic_answer(
+                message,
+                index_name = None, 
+                condense_question = True,
+                conversation = 'langchain').message
+
+    logging.info(f'Answer 2 (langchain): {answer.text}')
 
     # Test case 3
     message = Message(
         text="Hello",
-        session_id='test_session_id'
+        session_id='test_session_id_3_1'
     )
-
     answer = llm_chat_bot.get_semantic_answer(
                 message,
                 index_name = None,
-                condense_question = True)
+                condense_question = True).message
     
-    logging.info(f'Answer 3: {answer.text}')
+    logging.info(f'Answer 3 (custom): {answer.text}')
+
+    message = Message(
+        text="Hello",
+        session_id='test_session_id_3_2'
+    )
+    answer = llm_chat_bot.get_semantic_answer(
+                message,
+                index_name = None, 
+                condense_question = True,
+                conversation = 'langchain').message
+
+    logging.info(f'Answer 3 (langchain): {answer.text}')
 
     # Test case 4
     message = Message(
         text="你好",
-        session_id='test_session_id'
+        session_id='test_session_id_4_1'
     )
-
     answer = llm_chat_bot.get_semantic_answer(
                 message,
                 index_name = None,
-                condense_question = True)
+                condense_question = True).message
     
-    logging.info(f'Answer 4: {answer.text}')
+    logging.info(f'Answer 4 (custom): {answer.text}')
+
+    message = Message(
+        text="你好",
+        session_id='test_session_id_4_2'
+    )
+    answer = llm_chat_bot.get_semantic_answer(
+                message,
+                index_name = None, 
+                condense_question = True,
+                conversation = 'langchain').message
+
+    logging.info(f'Answer 4 (langchain): {answer.text}')
