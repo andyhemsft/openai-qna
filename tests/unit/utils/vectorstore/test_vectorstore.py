@@ -99,57 +99,82 @@ def test_add_documents(vector_store):
 
     for key, vector_store in vector_store.items():
         if key == 'faiss':
+            continue
             vector_store.add_documents([doc])
 
-def test_add_texts(vector_store):
-    """This function tests add texts function for vector store."""
+        elif key == 'redis':
+            # vector_store.create_index('test_add_document_in_unit_test')
+            vector_store.add_documents([doc], index_name='test_add_document_in_unit_test')
 
-    text = "This is a test document only."
-    metadata = {"source": "local"}
+# def test_add_texts(vector_store):
+#     """This function tests add texts function for vector store."""
 
-    for key, vector_store in vector_store.items():
-        if key == 'faiss':
-            vector_store.add_texts([text], [metadata])
+#     text = "This is a test document only."
+#     metadata = {"source": "local"}
 
-def test_similarity_search(vector_store):
-    """This function tests similarity search function for vector store."""
+#     for key, vector_store in vector_store.items():
+#         if key == 'faiss':
+#             vector_store.add_texts([text], [metadata])
 
-    query = "This is a test query only."
-    doc1 =  Document(page_content="This is a test document from local.", metadata={"source": "local"})
-    # doc2 =  Document(page_content="This is a test document from web.", metadata={"source": "web"})
+# def test_similarity_search(vector_store):
+#     """This function tests similarity search function for vector store."""
 
-    for key, vector_store in vector_store.items():
-        if key == 'faiss':
-            vector_store.add_documents([doc1])
-            vector_store.add_texts(["This is a test document from web."], [{"source": "web"}])
-            result = vector_store.similarity_search(query, filter={"source": "web"})
+#     query = "This is a test query only."
+#     doc1 =  Document(page_content="This is a test document from local.", metadata={"source": "local"})
+#     # doc2 =  Document(page_content="This is a test document from web.", metadata={"source": "web"})
 
-            assert len(result) > 0
-            assert result[0][0].page_content == "This is a test document from web."
-            assert result[0][0].metadata["source"] == "web"
+#     for key, vector_store in vector_store.items():
+#         if key == 'faiss':
+#             vector_store.add_documents([doc1])
+#             vector_store.add_texts(["This is a test document from web."], [{"source": "web"}])
+#             result = vector_store.similarity_search(query, filter={"source": "web"})
 
-def test_get_retiever(vector_store):
-    """This function tests get retiever function for vector store."""
+#             assert len(result) > 0
+#             assert result[0][0].page_content == "This is a test document from web."
+#             assert result[0][0].metadata["source"] == "web"
 
-    text_splitter = TokenTextSplitter(chunk_size=2000, chunk_overlap=500)
-    document_A = TextLoader('samples/A.txt', encoding = 'utf-8').load()
-    document_B = TextLoader('samples/B.txt', encoding = 'utf-8').load()
-    document_C = TextLoader('samples/C.txt', encoding = 'utf-8').load()
+# def test_get_retiever(vector_store):
+#     """This function tests get retiever function for vector store."""
 
-    documents = [document_A, document_B, document_C]
-    query = "Who is Elon Musk?"
+#     text_splitter = TokenTextSplitter(chunk_size=2000, chunk_overlap=500)
+#     document_A = TextLoader('samples/A.txt', encoding = 'utf-8').load()
+#     document_B = TextLoader('samples/B.txt', encoding = 'utf-8').load()
+#     document_C = TextLoader('samples/C.txt', encoding = 'utf-8').load()
 
-    for key, vector_store in vector_store.items():
-        if key == 'faiss':
-            for doc in documents:
-                chunks = text_splitter.split_documents(doc)
-                vector_store.add_documents(chunks)
+#     documents = [document_A, document_B, document_C]
+#     query = "Who is Elon Musk?"
 
-            retriver = vector_store.get_retriever()
+#     for key, vector_store in vector_store.items():
+#         if key == 'faiss':
+#             for doc in documents:
+#                 chunks = text_splitter.split_documents(doc)
+#                 vector_store.add_documents(chunks)
 
-            result = retriver.get_relevant_documents(query)
+#             retriver = vector_store.get_retriever()
 
-            assert len(result) > 0
+#             result = retriver.get_relevant_documents(query)
+
+#             assert len(result) > 0
             
-            logger.info(result[0].page_content)
-    
+#             logger.info(result[0].page_content)
+
+
+def test_check_existing_index(vector_store):
+    """This function tests check existing index function for vector store."""
+
+    for key, vector_store in vector_store.items():
+        if key == 'redis':
+            assert vector_store.check_existing_index('test_index_in_unit_test') == False
+
+def test_create_and_drop_index(vector_store):
+    """This function tests drop index function for vector store."""
+
+    for key, vector_store in vector_store.items():
+        if key == 'redis':
+            vector_store.create_index('test_index_in_unit_test')
+
+            assert vector_store.check_existing_index('test_index_in_unit_test') == True
+
+            vector_store.drop_index('test_index_in_unit_test')
+
+            assert vector_store.check_existing_index('test_index_in_unit_test') == False

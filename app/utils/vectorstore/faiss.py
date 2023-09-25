@@ -117,7 +117,7 @@ class FAISSExtended(BaseVectorStore):
 
         return self.vector_store.similarity_search_with_relevance_scores(query, k, filter=filter)
 
-    def create_index(self, index_name: str) -> None:
+    def create_index(self, index_name: str, distance_metric: Optional[str]="COSINE") -> None:
         """This function creates an index.
         
         Args:
