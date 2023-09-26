@@ -42,8 +42,9 @@ class BaseVectorStore:
     @abstractmethod
     def add_texts(
             self, 
-            texts: List[str], 
-            index_name: Optional[str] = None,
+            texts: List[str],
+            metadatas: Optional[List[Dict[str, Any]]] = None, 
+            index_name: str = None, 
             **kwargs: Any
         ) -> None:
         """This function adds texts to the vector store.
