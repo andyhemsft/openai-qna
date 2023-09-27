@@ -73,9 +73,23 @@ class BaseVectorStore:
         Returns:
             docs and relevance scores in the range [0, 1].
         """
+    
+    @abstractmethod
+    def check_existing_index(self, index_name: str = None) -> bool:
+        """This function checks if the index exists.
+        
+        Args:
+            index_name: the index name
+        Returns:
+
+        """
 
     @abstractmethod
-    def create_index(self, index_name: str, distance_metric: Optional[str]="COSINE") -> None:
+    def create_index(self, 
+                     index_name: str, 
+                     metadata_schema: Dict[str, str]=None, 
+                     distance_metric: Optional[str]="COSINE"
+                     ) -> None:
         """This function creates an index.
         
         Args:

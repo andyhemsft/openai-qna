@@ -48,14 +48,22 @@ def indexer():
     config = Config()
     indexer = get_indexer(config)
 
+    index_name = request.json['index_name']
+    if index_name is None:
+        return {'data': 'index_name is required'}, 400
+
     if request.method == 'POST':
+        
+        if indexer.check_existing_index(index_name=index_name):
+            return {'data': 'Index already exists'}, 400
+
         # Create index
-        indexer.create_index()
+        indexer.create_index(index_name=index_name)
         return 'Index created'
 
     elif request.method == 'DELETE':
         # Delete index
-        indexer.delete_index()
+        indexer.delete_index(index_name=index_name)
         return 'Index deleted'
     
     else:
@@ -75,6 +83,9 @@ def document():
 
         source_url = request.json['source_url']
         index_name = request.json['index_name']
+
+        if not indexer.check_existing_index(index_name=index_name):
+            return {'data': f'Index {index_name} does not exist'}, 400
 
         indexer.add_document(source_url=source_url, index_name=index_name)
         

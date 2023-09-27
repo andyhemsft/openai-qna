@@ -43,7 +43,7 @@ class LLMChatBot:
         
         """
 
-        session_id = str(uuid.uuid4())
+        session_id = str(uuid.uuid4()).replace('-', '')
 
         # Add the initial message
         initial_message = Message(
@@ -53,7 +53,7 @@ class LLMChatBot:
             received_timestamp=datetime.now(),
             responded_timestamp=datetime.now(),
             user_id=user_meta['user_id'],
-            is_bot=True
+            is_bot=1
         ) 
 
         self.history_manager.add_message(initial_message)
@@ -228,6 +228,7 @@ class LLMChatBot:
             logger.debug(f'Question with chat history: {question_with_chat_history}')
 
             # get related documents
+            logger.info(f"indices: {index_name}")
             related_documents = self.indexer.similarity_search(question_with_chat_history, index_name=index_name)
 
             # concatenate the documents
@@ -254,7 +255,7 @@ class LLMChatBot:
         question_message.sequence_num = max_sequence_num + 1
         question_message.received_timestamp = received_timestamp
         question_message.responded_timestamp = datetime.now()
-        question_message.is_bot = False
+        question_message.is_bot = 0
 
         answer_message = Message(
             text=answer,
@@ -263,7 +264,7 @@ class LLMChatBot:
             received_timestamp=received_timestamp,
             responded_timestamp=datetime.now(),
             user_id=message.user_id,
-            is_bot=True
+            is_bot=1
         )
 
         self.history_manager.add_qa_pair(question_message, answer_message)
@@ -343,7 +344,7 @@ class LLMChatBot:
         question_message.sequence_num = max_sequence_num + 1
         question_message.received_timestamp = received_timestamp
         question_message.responded_timestamp = datetime.now()
-        question_message.is_bot = False
+        question_message.is_bot = 0
 
         result['answer'] = result['answer'].split('SOURCES:')[0].split('Sources:')[0].split('SOURCE:')[0].split('Source:')[0]
 
@@ -354,7 +355,7 @@ class LLMChatBot:
             received_timestamp=received_timestamp,
             responded_timestamp=datetime.now(),
             user_id=message.user_id,
-            is_bot=True
+            is_bot=1
         )
 
         self.history_manager.add_qa_pair(question_message, answer_message)

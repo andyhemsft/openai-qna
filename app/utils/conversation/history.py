@@ -1,13 +1,26 @@
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+import hashlib
 
 from app.config import Config
 from app.utils.llm import LLMHelper
 from app.utils.conversation import Message
 from app.utils.vectorstore import get_vector_store
+from app.utils.vectorstore.redis import format_index_name
 
 logger = logging.getLogger(__name__)
+
+CHAT_HISTORY_INDEX_NAME = 'chat_history'
+
+metadata_schema = {
+            'session_id': 'TEXT',
+            'sequence_num': 'NUMERIC',
+            'received_timestamp': 'TEXT',
+            'responded_timestamp': 'TEXT',
+            'user_id': 'TEXT',
+            'is_bot': 'NUMERIC' # 0 or 1
+}
 
 class HistoryManager:
     """This class represents a History Manager."""
@@ -30,6 +43,12 @@ class HistoryManager:
             # Currently, the chat history is saved in memory only
             pass
 
+        elif config.VECTOR_STORE_TYPE == 'redis':
+            if not self.short_term_store.check_existing_index(CHAT_HISTORY_INDEX_NAME):
+                logger.info(f"Creating index '{CHAT_HISTORY_INDEX_NAME}'")
+                self.short_term_store.create_index(index_name=CHAT_HISTORY_INDEX_NAME, metadata_schema=metadata_schema)
+            
+
         # TODO: We need to also log the history in log anlytics for long term storage
         self.long_term_store = None
 
@@ -47,13 +66,17 @@ class HistoryManager:
         metadata = {
             'session_id': message.session_id,
             'sequence_num': message.sequence_num,
-            'received_timestamp': message.received_timestamp,
-            'responded_timestamp': message.responded_timestamp,
+            'received_timestamp': str(message.received_timestamp),
+            'responded_timestamp': str(message.responded_timestamp),
             'user_id': message.user_id,
             'is_bot': message.is_bot
         }
 
-        self.short_term_store.add_texts([text], [metadata])
+        # session_id:sequence_num is the key
+        key = f"{format_index_name(CHAT_HISTORY_INDEX_NAME)}:{metadata['session_id']}:{metadata['sequence_num']}"
+        keys = [key]
+
+        self.short_term_store.add_texts([text], [metadata], index_name=CHAT_HISTORY_INDEX_NAME, keys=keys)
 
         # TODO: We need to also log the history in log anlytics for long term storage
     
@@ -73,13 +96,16 @@ class HistoryManager:
         metadata = {
             'session_id': question.session_id,
             'sequence_num': answer.sequence_num,
-            'received_timestamp': question.received_timestamp,
-            'responded_timestamp': answer.responded_timestamp,
+            'received_timestamp': str(question.received_timestamp),
+            'responded_timestamp': str(answer.responded_timestamp),
             'user_id': question.user_id,
             'is_bot': answer.is_bot
         }
 
-        self.short_term_store.add_texts([text], [metadata])
+        # session_id:sequence_num is the key
+        key = f"{format_index_name(CHAT_HISTORY_INDEX_NAME)}:{metadata['session_id']}:{metadata['sequence_num']}"
+        keys = [key]
+        self.short_term_store.add_texts([text], [metadata], index_name=CHAT_HISTORY_INDEX_NAME, keys=keys)
 
     def get_k_most_related_messages(
             self, 
@@ -101,11 +127,12 @@ class HistoryManager:
 
         documents = self.short_term_store.similarity_search(query, 
                                                             k, 
-                                                            filter={'session_id': session_id})
+                                                            filter={'session_id': session_id},
+                                                            index_name=CHAT_HISTORY_INDEX_NAME)
 
         messages = []
         for doc in documents:
-            logger.info(f"doc: {doc}")
+            # logger.info(f"doc: {doc}")
             if doc[1] < score_threshold:
                 continue
 
@@ -140,12 +167,17 @@ class HistoryManager:
         documents = self.short_term_store.similarity_search(
             query='',
             k=self.config.CHATBOT_MAX_MESSAGES, 
-            filter={'session_id': session_id})
+            filter={'session_id': session_id},
+            index_name=CHAT_HISTORY_INDEX_NAME    
+        )
 
         messages = []
+
+        logger.info(f"len(documents): {len(documents)}")
         for doc in documents:
+            logger.info(f"doc: {doc}")
             message = self.from_doc_to_message(doc)
-            if message.sequence_num > 0: # The 0 sequence number is a placeholder
+            if int(message.sequence_num) > 0: # The 0 sequence number is a placeholder
                 messages.append((message.sequence_num, message))
 
         messages.sort(key=lambda x: x[0], reverse=True)
@@ -183,8 +215,10 @@ class HistoryManager:
         if len(messages) == 0:
             return 0, datetime.now()
         else:
-            return messages[-1].sequence_num, messages[0].received_timestamp
+            earliest_time = datetime.strptime(messages[0].received_timestamp, '%Y-%m-%d %H:%M:%S.%f')
 
+            return messages[-1].sequence_num, earliest_time
+        
     def from_doc_to_message(self, doc) -> Message:
         """
         Convert a document to a message.
@@ -198,11 +232,16 @@ class HistoryManager:
         message = Message(
             text=doc[0].page_content,
             session_id=doc[0].metadata['session_id'],
-            sequence_num=doc[0].metadata['sequence_num'],
+            sequence_num=int(doc[0].metadata['sequence_num']),
             received_timestamp=doc[0].metadata['received_timestamp'],
             responded_timestamp=doc[0].metadata['responded_timestamp'],
             user_id=doc[0].metadata['user_id'],
-            is_bot=doc[0].metadata['is_bot']
+            is_bot=int(doc[0].metadata['is_bot'])
         )
 
         return message
+    
+    def clear_all_history(self) -> None:
+        """Clear all the history."""
+
+        self.short_term_store.drop_index(CHAT_HISTORY_INDEX_NAME)

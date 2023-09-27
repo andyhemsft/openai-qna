@@ -11,8 +11,8 @@ class Message:
             sequence_num: int = None, 
             received_timestamp: datetime = None,
             responded_timestamp: datetime = None, 
-            user_id=None, 
-            is_bot=False
+            user_id: str = None, 
+            is_bot: int = 0
         ):
         """
         Initialize the Message.

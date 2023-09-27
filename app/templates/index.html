@@ -60,7 +60,8 @@
             // Prepare the sample data
 
             var data = {
-            "user_id": "test_user_id"
+            "user_id": "test_user_id",
+            "index_name": "test_document",
             };
             // Get the session ID from the server
             $.ajax({
@@ -153,7 +154,7 @@
             "session_id": window.session_id,
             "question": rawText,
             "user_id": "test_user_id",
-            "index_name": null
+            "index_name": "test_document"
             };
         // Get the session ID from the server
         $.ajax({
