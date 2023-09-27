@@ -13,7 +13,7 @@ import hashlib
 from redis.client import Redis
 from redis.commands.search.query import Query
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
-from redis.commands.search.field import VectorField, TagField, TextField
+from redis.commands.search.field import VectorField, TagField, TextField, NumericField
 
 from typing import Any, List, Optional, Dict, Tuple
 
@@ -127,7 +127,11 @@ class RedisExtended(BaseVectorStore):
 
         return RedisCluster.from_url(redis_url, **kwargs)
 
-    def create_index(self, index_name: str, distance_metric: Optional[str]="COSINE", metadata_schema: Dict[str, str]=None) -> None:
+    def create_index(self, 
+                     index_name: str, 
+                     metadata_schema: Dict[str, str]=None, 
+                     distance_metric: Optional[str]="COSINE"
+                     ) -> None:
         """This function creates an index.
         
         Args:
@@ -152,6 +156,8 @@ class RedisExtended(BaseVectorStore):
             for key, value in metadata_schema.items():
                 if value.lower() == 'text':
                     fields.append(TextField(name=key))
+                elif value.lower() == 'numeric':
+                    fields.append(NumericField(name=key))
                 else:
                     raise ValueError(f"Metadata schema value '{value}' is not supported.")
         
@@ -265,17 +271,25 @@ class RedisExtended(BaseVectorStore):
         Returns:
             none
         """
-
-        redis_langchain = self._get_langchain_redis(index_name)
-        logger.debug(f"Schemas: {redis_langchain.schema}")
+        # TODO: using langchain redis add_documents is too buggy, may remove it completely
+        # redis_langchain = self._get_langchain_redis(index_name)
+        # logger.debug(f"Schemas: {redis_langchain.schema}")
 
         keys = []
-        for document in documents:
-            key = hashlib.sha256(document.page_content.encode("utf-8")).hexdigest()
-            keys.append(f"{format_index_name(index_name)}:{key}")
+        if 'keys' in kwargs:
+            keys = kwargs['keys']
+        else:
+            for document in documents:
+                key = hashlib.sha256(document.page_content.encode("utf-8")).hexdigest()
+                keys.append(f"{format_index_name(index_name)}:{key}")
+
+        texts = [document.page_content for document in documents]
+        metadatas = [document.metadata for document in documents]
+
+        self.add_texts(texts, metadatas=metadatas, index_name=index_name, keys=keys)
 
         # Add documents to the index
-        redis_langchain.add_documents(documents, keys=keys)
+        # redis_langchain.add_documents(documents, keys=keys)
 
     def add_texts(
             self, 
@@ -293,15 +307,29 @@ class RedisExtended(BaseVectorStore):
             none
         """
 
-        redis_langchain = self._get_langchain_redis(index_name)
+        # TODO: using langchain redis add_texts is too buggy, may remove it completely
+        # redis_langchain = self._get_langchain_redis(index_name)
 
         keys = []
-        for text in texts:
-            key = hashlib.sha256(text.encode("utf-8")).hexdigest()
-            keys.append(f"{format_index_name(index_name)}:{key}")
+        if 'keys' in kwargs:
+            keys = kwargs['keys']
+        else:
+            for text in texts:
+                key = hashlib.sha256(text.encode("utf-8")).hexdigest()
+                keys.append(f"{format_index_name(index_name)}:{key}")
+
+        for key, text, metadata in zip(keys, texts, metadatas):
+            
+            metadata['content'] = text
+
+            emdeded_text = self.embeddings.embed_query(text)
+            emdeded_text = np.array(emdeded_text).astype(np.float32).tobytes()
+            metadata['content_vector'] = emdeded_text
+
+            self.redis_client.hset(key, mapping=metadata)
 
         # Add texts to the index
-        redis_langchain.add_texts(texts, metadatas=metadatas, keys=keys)
+        # redis_langchain.add_texts(texts, metadatas=metadatas, keys=keys)
 
     def similarity_search( 
             self, 
@@ -320,7 +348,7 @@ class RedisExtended(BaseVectorStore):
             docs and relevance scores in the range [0, 1].
         """
         
-        ## It is too buggy to use langchain redis similarity search
+        ## It is too hard to use langchain redis similarity search
         ## We decide to use the native redis similarity search instead
 
         # redis_langchain = self._get_langchain_redis(index_name)
@@ -351,11 +379,11 @@ class RedisExtended(BaseVectorStore):
             
             for key in schema.keys():
                 # TODO: Dont return the content and content vector, currently it is hard coded
-                if key != "content_vector" or key != "content":
+                if key != "content_vector" and key != "content":
                     metadata[key] = result.__getattribute__(key)
             doc = Document(page_content=result.content, metadata=metadata)
 
-            docs_with_scores.append((doc, result.score))
+            docs_with_scores.append((doc, float(result.score)))
 
         logger.debug(f"docs_with_scores: {docs_with_scores}")
 
@@ -384,16 +412,14 @@ class RedisExtended(BaseVectorStore):
             query = (
                 Query(f"({filter_expression})=>[KNN {k} @content_vector $vec as score]")
                 .sort_by("score")
-                .paging(0, 2)
                 .dialect(2)
             )
 
         else:
             # Langchain use content_vector as the default vector name
             query = (
-                Query(f"*=>[KNN {str(k)} @content_vector $vec as score]")
+                Query(f"*=>[KNN {k} @content_vector $vec as score]")
                 .sort_by("score")
-                .paging(0, 2)
                 .dialect(2)
             )
 

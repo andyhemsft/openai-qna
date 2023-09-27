@@ -14,6 +14,11 @@ from app.config import Config
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_METADATA_SCHEMA = {
+    "source": "TEXT",
+    "chunk_id": "NUMERIC"
+}
+
 class Indexer:
     """This class represents an Indexer."""
 
@@ -29,17 +34,35 @@ class Indexer:
         self.config = config
         self.vector_store = get_vector_store(config)
 
-    @abstractmethod
-    def create_index(self, index_name: str) -> None:
+    def create_index(self, 
+                     index_name: str, 
+                     metadata_schema: Dict[str, str]=None, 
+                     distance_metric: Optional[str]="COSINE"
+                     ) -> None:
         """This function creates an index.
+            
+            The metadata_schema is in the format of:
+            {
+                "metadata_name": "metadata_type"
+            }
+            where metadata_type is one of the following:
+            - TEXT
+            - NUMERIC
+
+            The underlying vector store will automatically create 2 fields automatically:
+            1. a field called content which is the text of the document.
+            2. a field called content_vector which is the embedding of the document.
+
+            SO, no need to add these 2 fields in the metadata_schema.
         
         Args:
             index_name: the index name
         Returns:
             none
         """
+        # TODO: metadata_schema is not used yet.
+        self.vector_store.create_index(index_name, DEFAULT_METADATA_SCHEMA, distance_metric)
 
-    @abstractmethod
     def drop_index(self, index_name: str) -> None:
         """This function drops an index.
         
@@ -48,6 +71,7 @@ class Indexer:
         Returns:
             none
         """
+        self.vector_store.drop_index(index_name)
 
     @abstractmethod
     def drop_all_indexes(self) -> None:
@@ -77,6 +101,17 @@ class Indexer:
             none
         """
         
+    def check_existing_index(self, index_name: str) -> bool:
+        """This function checks if the index exists.
+        
+        Args:
+            index_name: the index name
+        Returns:
+            none
+        """
+
+        return self.vector_store.check_existing_index(index_name)
+
     def get_retriever(self, index_name: Optional[str] = None) -> VectorStoreRetriever:
         """This function gets the retriever.
         
@@ -136,7 +171,7 @@ class FixedChunkIndexer(Indexer):
         chunks = self.text_splitter.split_documents(document)
 
         # Add metadata to the chunks
-        keys = []
+
         for i, chunk in enumerate(chunks):
             # Create a unique key for the chunk
             source_url = source_url.split('?')[0]
@@ -172,25 +207,5 @@ class FixedChunkIndexer(Indexer):
 
         return self.vector_store.similarity_search(query, k, filter=filter, index_name=index_name)
     
-    def create_index(self, index_name: str) -> None:
-        """This function creates an index.
-        
-        Args:  
-            index_name: the index name
-        Returns:
-            none
-        """
 
-        return self.vector_store.create_index(index_name)
-    
-    def drop_index(self, index_name: str) -> None:
-        """This function drops an index.
-        
-        Args:
-            index_name: the index name
-        Returns:
-            none
-        """
-
-        return self.vector_store.drop_index(index_name)
     

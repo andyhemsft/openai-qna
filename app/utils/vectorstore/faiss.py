@@ -117,7 +117,11 @@ class FAISSExtended(BaseVectorStore):
 
         return self.vector_store.similarity_search_with_relevance_scores(query, k, filter=filter)
 
-    def create_index(self, index_name: str, distance_metric: Optional[str]="COSINE") -> None:
+    def create_index(self, 
+                     index_name: str, 
+                     metadata_schema: Dict[str, str]=None, 
+                     distance_metric: Optional[str]="COSINE"
+                     ) -> None:
         """This function creates an index.
         
         Args:
@@ -148,4 +152,17 @@ class FAISSExtended(BaseVectorStore):
         # Make sure we load it before using it
         self.load_local(self.config.FAISS_LOCAL_FILE_INDEX)
         return self.vector_store.as_retriever()
+    
+    def check_existing_index(self, index_name: str = None) -> bool:
+        """This function checks if the index exists.
+        
+        Args:
+            index_name: the index name
+        Returns:
+
+        """
+            
+        logger.warning('FAISS does not support index name parameter')
+
+        return True
 
