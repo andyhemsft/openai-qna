@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_METADATA_SCHEMA = {
     "source": "TEXT",
-    "chunk_id": "NUMERIC"
+    "chunk_id": "NUMERIC",
+    "source_url": "TEXT"
 }
 
 class Indexer:
