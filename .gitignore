@@ -162,3 +162,7 @@ cython_debug/
 
 # Ignore data files
 data/
+.python_packages
+
+# Ignore visual studio code
+.vscode/

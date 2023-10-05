@@ -50,8 +50,8 @@ class LLMChatBot:
             text="",
             session_id=session_id,
             sequence_num=0,
-            received_timestamp=datetime.now(),
-            responded_timestamp=datetime.now(),
+            received_timestamp=str(datetime.now()),
+            responded_timestamp=str(datetime.now()),
             user_id=user_meta['user_id'],
             is_bot=1
         ) 
@@ -253,16 +253,16 @@ class LLMChatBot:
 
         question_message = message
         question_message.sequence_num = max_sequence_num + 1
-        question_message.received_timestamp = received_timestamp
-        question_message.responded_timestamp = datetime.now()
+        question_message.received_timestamp = str(received_timestamp)
+        question_message.responded_timestamp = str(datetime.now())
         question_message.is_bot = 0
 
         answer_message = Message(
             text=answer,
             session_id=message.session_id,
             sequence_num=max_sequence_num + 2,
-            received_timestamp=received_timestamp,
-            responded_timestamp=datetime.now(),
+            received_timestamp=str(received_timestamp),
+            responded_timestamp=str(datetime.now()),
             user_id=message.user_id,
             is_bot=1
         )
@@ -342,8 +342,8 @@ class LLMChatBot:
 
         question_message = message
         question_message.sequence_num = max_sequence_num + 1
-        question_message.received_timestamp = received_timestamp
-        question_message.responded_timestamp = datetime.now()
+        question_message.received_timestamp = str(received_timestamp)
+        question_message.responded_timestamp = str(datetime.now())
         question_message.is_bot = 0
 
         result['answer'] = result['answer'].split('SOURCES:')[0].split('Sources:')[0].split('SOURCE:')[0].split('Source:')[0]
@@ -352,8 +352,8 @@ class LLMChatBot:
             text=result['answer'],
             session_id=message.session_id,
             sequence_num=max_sequence_num + 2,
-            received_timestamp=received_timestamp,
-            responded_timestamp=datetime.now(),
+            received_timestamp=str(received_timestamp),
+            responded_timestamp=str(datetime.now()),
             user_id=message.user_id,
             is_bot=1
         )

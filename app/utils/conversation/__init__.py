@@ -9,8 +9,8 @@ class Message:
             text: str, 
             session_id: str, 
             sequence_num: int = None, 
-            received_timestamp: datetime = None,
-            responded_timestamp: datetime = None, 
+            received_timestamp: str = None,
+            responded_timestamp: str = None, 
             user_id: str = None, 
             is_bot: int = 0
         ):
