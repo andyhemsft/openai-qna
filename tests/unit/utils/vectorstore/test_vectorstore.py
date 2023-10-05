@@ -59,9 +59,10 @@ def vector_store():
     Config.VECTOR_STORE_TYPE = 'faiss'
     vector_store['faiss'] = get_vector_store(config)
 
-    # Load Redis vector store
-    Config.VECTOR_STORE_TYPE = 'redis'
-    vector_store['redis'] = get_vector_store(config)
+    # TODO: we need to mock up the redis server for unit test
+    # # Load Redis vector store
+    # Config.VECTOR_STORE_TYPE = 'redis'
+    # vector_store['redis'] = get_vector_store(config)
 
     # Restore old config
     Config.VECTOR_STORE_TYPE = old_vector_store_type

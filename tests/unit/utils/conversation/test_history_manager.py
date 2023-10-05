@@ -105,9 +105,10 @@ def history_managers():
     Config.VECTOR_STORE_TYPE = 'faiss'
     history_managers['faiss'] = HistoryManager(config)
 
-    # Load Redis vector store
-    Config.VECTOR_STORE_TYPE = 'redis'
-    history_managers['redis'] = HistoryManager(config)
+    # TODO: we need to mock up the redis server for unit test
+    # # Load Redis vector store
+    # Config.VECTOR_STORE_TYPE = 'redis'
+    # history_managers['redis'] = HistoryManager(config)
 
     # Restore old config
     Config.VECTOR_STORE_TYPE = old_vector_store_type
