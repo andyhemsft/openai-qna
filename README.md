@@ -14,7 +14,7 @@ This framework provides a straightforward chatbot interface that allows you to i
     ```
     git clone https://github.com/andyhemsft/openai-qna.git
     cd openai-qna
-    pip install -r requirements.txt
+    pip install -r requirements_flask.txt
     ```
 
 3. Run the following command in the root directory of your local repository:
