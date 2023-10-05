@@ -170,3 +170,4 @@ data/
 # Azure function project setting
 host.json
 local.settings.json
+
