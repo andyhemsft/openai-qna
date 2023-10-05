@@ -166,3 +166,8 @@ data/
 
 # Ignore visual studio code
 .vscode/
+
+# Azure function project setting
+host.json
+local.settings.json
+
