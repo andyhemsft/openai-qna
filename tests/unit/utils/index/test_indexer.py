@@ -69,7 +69,12 @@ def test_add_document(indexer):
     """This function tests add document function."""
 
     for key in indexer:
+        # Test case 1
         indexer[key].add_document('samples/A.txt', 'test')
+
+        # Test case 2
+        source_url = 'https://openaiembeddingqna01str.blob.core.windows.net/test/B.txt'
+        indexer[key].add_document(source_url, 'test')
 
 def test_similarity_search(indexer):
     """This function tests similarity search function."""

@@ -118,9 +118,9 @@
       botResponse(msgText);
     });
 
-    function appendMessage(name, img, side, text) {
+    function appendMessage(name, img, side, text, source_urls) {
       //   Simple solution for small apps
-      const msgHTML = `
+      var msgHTML = `
         <div class="msg ${side}-msg">
         <div class="msg-img" style="background-image: url(${img})"></div>
 
@@ -131,9 +131,29 @@
             </div>
 
             <div class="msg-text">${text}</div>
+        `
+
+      if(source_urls != null) {
+
+        for (var i = 0; i < source_urls.length; i++) {
+            msgHTML += `
+            <div class="msg-text"><a href="${source_urls[i]['url']}" target="_blank">${source_urls[i]['index'] + " " + source_urls[i]['file_name']}</a></div>
+            `;
+        }
+
+        msgHTML += `
+            </div>
         </div>
+            `;
+      }
+
+      else
+      {
+        msgHTML += `
+            </div>
         </div>
-        `;
+            `;
+      }
 
       msgerChat.insertAdjacentHTML("beforeend", msgHTML);
       msgerChat.scrollTop += 500;
@@ -166,7 +186,8 @@
             success: function(bot_response) {
                 console.log(bot_response);
                 const msgText = bot_response["answer"]["text"];
-                appendMessage(BOT_NAME, BOT_IMG, "left", msgText);
+                const source_urls = bot_response["source"]["source_urls"];
+                appendMessage(BOT_NAME, BOT_IMG, "left", msgText, source_urls);
             }
         });
 

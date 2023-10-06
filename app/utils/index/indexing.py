@@ -10,14 +10,14 @@ from langchain.docstore.document import Document
 from langchain.vectorstores.base import VectorStoreRetriever
 
 from app.utils.vectorstore import get_vector_store
+from app.utils.file.storage import get_storage_client, BLOB_STORAGE_PATERN
 from app.config import Config
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_METADATA_SCHEMA = {
     "source": "TEXT",
-    "chunk_id": "NUMERIC",
-    "source_url": "TEXT"
+    "chunk_id": "NUMERIC"
 }
 
 class Indexer:
@@ -162,6 +162,13 @@ class FixedChunkIndexer(Indexer):
                 document = TextLoader(source_url, encoding = 'utf-8').load()
             else:
                 logging.debug(f'Loading document from web {source_url}')
+
+                if BLOB_STORAGE_PATERN in source_url:
+                    # This is a blob url
+                    blob_storage_client = get_storage_client('blob')
+                    container, blob_name = blob_storage_client._extract_container_blob_name(source_url)
+                    source_url = blob_storage_client.get_blob_sas(container, blob_name)
+
                 document = WebBaseLoader(source_url).load()
         except Exception as e:
             logger.error(e)
@@ -174,7 +181,7 @@ class FixedChunkIndexer(Indexer):
         # Add metadata to the chunks
 
         for i, chunk in enumerate(chunks):
-            # Create a unique key for the chunk
+            # Add the source url to the metadata
             source_url = source_url.split('?')[0]
 
             chunk.metadata = {"source": source_url, "chunk_id": i}

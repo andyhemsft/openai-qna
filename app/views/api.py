@@ -162,9 +162,12 @@ def chat_answer():
             index_name=request.json['index_name'],
             condense_question=condense_question,
             conversation=conversation
-        ).message
+        )
+
+        answer_message = answer.message
+        source = answer.source
         
-        return jsonify({'answer': answer.to_json()})
+        return jsonify({'answer': answer_message.to_json(), 'source': source.to_json()})
 
     else:
         raise ValueError('Method not supported')

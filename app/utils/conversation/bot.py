@@ -1,12 +1,14 @@
 import logging
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import uuid
 from datetime import datetime
+import re
 
 from langchain.chains.llm import LLMChain
 from langchain.chains.chat_vector_db.prompts import CONDENSE_QUESTION_PROMPT
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
+from langchain.docstore.document import Document
 
 from app.config import Config
 from app.utils.conversation.history import HistoryManager
@@ -94,7 +96,7 @@ class LLMChatBot:
             chat_history: the chat history
         """
 
-        chat_history_concatenated = '\n'.join([chat.text for chat in chat_history])
+        chat_history_concatenated = '\n'.join(chat.text for chat in chat_history)
         # logger.debug(f'Chat history concatenated: {chat_history_concatenated}')
 
         return chat_history_concatenated
@@ -267,9 +269,15 @@ class LLMChatBot:
             is_bot=1
         )
 
+        # Dont replace the source name with citations in the chat history, otherwise it will 
+        # confuse the model when generating the answer
         self.history_manager.add_qa_pair(question_message, answer_message)
 
-        return Answer(answer_message, None)
+        logger.debug(f'Answer before replace citation: {answer_message.text}')
+        answer_message, source = self.insert_citations_into_answer(answer_message)
+        logger.debug(f'Answer after replace citation: {answer_message.text}')
+
+        return Answer(answer_message, source)
 
     def _get_semantic_answer_langchain(
             self, 
@@ -391,7 +399,7 @@ class LLMChatBot:
         else:
             raise ValueError('Conversation type not supported')
     
-    def concatenate_documents(self, documents: List[str]) -> str:
+    def concatenate_documents(self, documents: List[Document]) -> str:
         """Concatenate the documents.
         
         Args:
@@ -400,8 +408,9 @@ class LLMChatBot:
 
         result = ''
 
-        for document in documents:
-            result += document[0].page_content + '\n'
+        for i in range(0, len(documents)):
+            result += f"Content: {documents[i][0].page_content}\n"
+            result += f"Source name: {documents[i][0].metadata['source']}\n\n"
 
         return result
     
@@ -416,18 +425,39 @@ class LLMChatBot:
         """
 
         raise NotImplementedError
-    
-    def insert_citations_into_answer(self, answer: str, file_list: List[str], session_id: str):
+
+
+    def insert_citations_into_answer(self, answer: Message) -> Tuple[Message, Source]:
         """
-        Insert citations into the answer.
+        Replace the source names with citations in the answer.
+        Return the source list as a Source object.
 
         Args:
             answer: the answer
         Returns:
-            the answer with citations
+            the new answer and the source list
         """
 
-        raise NotImplementedError
+        # The source name is in the format of: [[file_name]]
+        # e.g. [[A.txt]], [[https://test.blob.core.windows.net/test/A.txt]]
+
+        # Get the source names
+        source_names = re.findall(r'\[\[.*?\]\]', answer.text)
+
+        # Get the source urls
+        source_urls = [source_name[2:-2] for source_name in source_names]
+
+        # Map the source urls to be an index starting from 1
+        source_url_index = {source_url: i+1 for i, source_url in enumerate(source_urls)}
+
+        # Replace the source name with citations
+        for source_name in source_names:
+            answer.text = answer.text.replace(source_name, f'[{source_url_index[source_name[2:-2]]}]')
+
+        # Reverse the source url index
+        source_url_index = {v: k for k, v in source_url_index.items()}
+
+        return answer, Source(source_url_index)
     
     def get_all_chat_history(self, session_id: str) -> List[Message]:
         """Get the chat history for a session.
