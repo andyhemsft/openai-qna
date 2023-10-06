@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 from datetime import datetime, timedelta
 
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, generate_blob_sas, generate_container_sas, ContentSettings
@@ -7,6 +8,22 @@ from app.config import Config
 from typing import Tuple
 
 BLOB_STORAGE_PATERN = "blob.core.windows.net"
+
+def is_local_file(url: str) -> bool:
+    """This function checks if the url is a local file.
+    
+    Args:
+        url: the url
+    Returns:
+        true if the url is a local file
+    """
+
+    url_parsed = urlparse(url)
+
+    if url_parsed.scheme in ['file', '']:
+        return True
+    
+    return False
 
 class StorageClient:
 

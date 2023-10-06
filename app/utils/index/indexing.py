@@ -10,7 +10,7 @@ from langchain.docstore.document import Document
 from langchain.vectorstores.base import VectorStoreRetriever
 
 from app.utils.vectorstore import get_vector_store
-from app.utils.file.storage import get_storage_client, BLOB_STORAGE_PATERN
+from app.utils.file.storage import get_storage_client, BLOB_STORAGE_PATERN, is_local_file
 from app.config import Config
 
 logger = logging.getLogger(__name__)
@@ -157,7 +157,7 @@ class FixedChunkIndexer(Indexer):
 
         try:
             # Check if source url is a file
-            if os.path.isfile(source_url):
+            if is_local_file(source_url):
                 logging.debug(f'Loading document from file {source_url}')
                 document = TextLoader(source_url, encoding = 'utf-8').load()
             else:

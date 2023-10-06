@@ -1,9 +1,10 @@
 import logging
+import os
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 from app.config import Config
-from app.utils.file.storage import get_storage_client, BLOB_STORAGE_PATERN
+from app.utils.file.storage import get_storage_client, BLOB_STORAGE_PATERN, is_local_file
 
 class Message:
     """This class represents a Message."""
@@ -59,12 +60,17 @@ class Source:
         blob_storage_client = get_storage_client('blob')
         source_urls = []
 
-        # if the source is a blob url, then transform it to a sas url
+        
         for key in self.source_urls:
             
             file_name = self._extract_file_name(self.source_urls[key])
+            # if the source is a blob url, then transform it to a sas url
             if BLOB_STORAGE_PATERN in self.source_urls[key]:
                 self.source_urls[key] = blob_storage_client.get_sas_url(self.source_urls[key])
+
+            # if it is a file, then add file:// to the url
+            elif is_local_file(self.source_urls[key]):
+                self.source_urls[key] = f'file://{self.source_urls[key]}'
 
             source_urls.append((f'[{key}]', file_name, self.source_urls[key]))
         
