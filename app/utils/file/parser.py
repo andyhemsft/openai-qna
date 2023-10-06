@@ -4,7 +4,7 @@ from openpyxl import load_workbook
 from abc import abstractmethod
 
 from langchain.document_loaders import PyPDFLoader
-from app.utils.file.blobstorage import BlobStorageClient
+from app.utils.file.storage import BlobStorageClient
 from app.config import Config
 
 logger = logging.getLogger(__name__)

@@ -71,11 +71,9 @@ class FAISSExtended(BaseVectorStore):
 
         logger.warning('FAISS does not support index_name parameter')
 
-        # # Load the local file
-        # self.load_local(self.config.FAISS_LOCAL_FILE_INDEX)
-        self.vector_store.add_documents(documents)
-        # # Save to local file
-        # self.save_local(self.config.FAISS_LOCAL_FILE_INDEX)
+        texts = [document.page_content for document in documents]
+        metadatas = [document.metadata for document in documents]
+        self.add_texts(texts=texts, metadatas=metadatas)
 
     def add_texts(
             self, 
