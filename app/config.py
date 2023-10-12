@@ -2,7 +2,7 @@ import os
 import logging
 from dotenv import load_dotenv
 
-load_dotenv()
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -12,6 +12,8 @@ class Config():
     
     Dont change the default values here. Instead, use the .env file.
     """
+
+    load_dotenv(override=True)
 
     CSRF_ENABLED = True
 
@@ -34,8 +36,12 @@ class Config():
     # for text-embedding-ada-002 model , you will obtain a high-dimensional array (vector) consisting of 1536 floating-point numbers
     OPENAI_EMBEDDING_SIZE = os.getenv('OPENAI_EMBEDDING_SIZE', 1536) 
 
+    # Search parameters
+
+    
+
     # Vector Store parameters
-    VECTOR_STORE_TYPE = os.getenv('VECTOR_STORE_TYPE', 'faiss') # redis, azure, faiss
+    VECTOR_STORE_TYPE = os.getenv('VECTOR_STORE_TYPE', 'faiss') # redis, azuresearch, faiss
 
     # Faiss parameters
     FAISS_LOCAL_FILE_CHATHISTORY = os.getenv('FAISS_LOCAL_FILE_CHATHISTORY', 'data/faiss/chathistory')
@@ -46,6 +52,10 @@ class Config():
     REDIS_PORT = os.getenv('REDIS_PORT', 6379)
     REDIS_PROTOCOL = os.getenv('REDIS_PROTOCOL', 'redis://')
     REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
+
+    # Azure Search parameters
+    AZURE_SEARCH_ENDPOINT = os.getenv('AZURE_SEARCH_ENDPOINT')
+    AZURE_SEARCH_API_KEY = os.getenv('AZURE_SEARCH_API_KEY')
 
     # Parser parameters
     SUPPORTED_DOCUMENT_TYPES = set(['pdf', 'excel'])
@@ -69,6 +79,10 @@ class Config():
     CHUNKING_STRATEGY_OVERLAP = os.getenv('CHUNKING_STRATEGY_OVERLAP', 400)
 
     # Similarity threshold parameters
+    TOP_K_RELATED_DOCUMENTS = os.getenv('TOP_K_RELATED_DOCUMENTS', 3)
     CHAT_HISTORY_SEARCH_TYPE = os.getenv('CHAT_HISTORY_SEARCH_TYPE', 'most_related') # most_related, most_recent
     CHAT_HISTORY_SIMILARITY_THRESHOLD = os.getenv('CHAT_HISTORY_SIMILARITY_THRESHOLD', 0)
-    DOCUMENT_SIMILARITY_THRESHOLD = os.getenv('DOCUMENT_SIMILARITY_THRESHOLD', 0.5)
+    DOCUMENT_SIMILARITY_THRESHOLD = os.getenv('DOCUMENT_SIMILARITY_THRESHOLD', 0.7)
+
+    # SQL DB parameters
+    SQL_CONNECTION_STRING = os.getenv('SQL_CONNECTION_STRING')

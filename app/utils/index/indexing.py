@@ -202,9 +202,10 @@ class FixedChunkIndexer(Indexer):
     def similarity_search( 
             self, 
             query: str, 
-            k: int = 4, 
+            k: int = Config.TOP_K_RELATED_DOCUMENTS, 
             filter: Optional[Dict[str, Any]] = None,
-            index_name: Optional[str] = None
+            index_name: Optional[str] = None,
+            **kwargs: Any
         ) -> List[Tuple[Document, float]]:
         """This function performs a similarity search.
         
@@ -213,7 +214,7 @@ class FixedChunkIndexer(Indexer):
         if self.config.VECTOR_STORE_TYPE == 'faiss':
             self.vector_store.load_local(self.config.FAISS_LOCAL_FILE_INDEX)
 
-        return self.vector_store.similarity_search(query, k, filter=filter, index_name=index_name)
+        return self.vector_store.similarity_search(query, k, filter=filter, index_name=index_name, **kwargs)
     
 
     

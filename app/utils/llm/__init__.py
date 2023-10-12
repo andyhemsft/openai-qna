@@ -1,9 +1,12 @@
 import os
+import logging
 
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
 
 from app.config import Config
+
+logger = logging.getLogger(__name__)
 
 class LLMHelper:
     def __init__(self, config: Config):
@@ -30,7 +33,7 @@ class LLMHelper:
             assert self.config.OPENAI_API_BASE is not None, 'OPENAI_API_BASE must be set'
             assert self.config.OPENAI_API_KEY is not None, 'OPENAI_API_KEY must be set'
             assert self.config.OPENAI_ENGINE is not None, 'OPENAI_ENGINE must be set'
-
+            
             if temperature is None:
                 temperature = self.config.OPENAI_TEMPERATURE
 

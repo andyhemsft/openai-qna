@@ -3,6 +3,7 @@ from typing import List
 from app.utils.vectorstore.base import BaseVectorStore
 from app.utils.vectorstore.faiss import FAISSExtended
 from app.utils.vectorstore.redis import RedisExtended
+from app.utils.vectorstore.azuresearch import AzureSearch
 from app.utils.llm import LLMHelper
 from app.config import Config
 
@@ -25,6 +26,8 @@ def get_vector_store(config: Config) -> BaseVectorStore:
     elif config.VECTOR_STORE_TYPE == 'redis':
         vector_store = RedisExtended(config, embeddings)
 
+    elif config.VECTOR_STORE_TYPE == 'azuresearch':
+        vector_store = AzureSearch(config, embeddings)
     else:
         raise ValueError('Vector store type not supported')
 

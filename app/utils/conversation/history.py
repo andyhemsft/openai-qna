@@ -32,11 +32,17 @@ class HistoryManager:
         Args:
             config: the config object
         """
-
+        OLD_VECTOR_STORE_TYPE = config.VECTOR_STORE_TYPE
         self.config = config
+        self.config.VECTOR_STORE_TYPE = 'faiss'
+
+        logger.info(f"Using {self.config.VECTOR_STORE_TYPE} as chat history store")
 
         # There could be a better way to do this, but for now we will use the same vector store
         self.short_term_store = get_vector_store(config)
+
+        # Restore old config
+        self.config.VECTOR_STORE_TYPE = OLD_VECTOR_STORE_TYPE
 
         if config.VECTOR_STORE_TYPE == 'faiss':
             # TODO: We may save and load the chat history from local file
@@ -47,6 +53,14 @@ class HistoryManager:
             if not self.short_term_store.check_existing_index(CHAT_HISTORY_INDEX_NAME):
                 logger.info(f"Creating index '{CHAT_HISTORY_INDEX_NAME}'")
                 self.short_term_store.create_index(index_name=CHAT_HISTORY_INDEX_NAME, metadata_schema=metadata_schema)
+
+        elif config.VECTOR_STORE_TYPE == 'azuresearch':
+            if not self.short_term_store.check_existing_index(CHAT_HISTORY_INDEX_NAME):
+                logger.info(f"Creating index '{CHAT_HISTORY_INDEX_NAME}'")
+                self.short_term_store.create_index(index_name=CHAT_HISTORY_INDEX_NAME, metadata_schema=metadata_schema)
+
+        else:
+            raise ValueError('Vector store type not supported')
             
 
         # TODO: We need to also log the history in log anlytics for long term storage

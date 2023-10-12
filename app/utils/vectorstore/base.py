@@ -62,7 +62,8 @@ class BaseVectorStore:
             query: str, 
             k: int = 4, 
             filter: Optional[Dict[str, Any]] = None,
-            index_name: Optional[str] = None
+            index_name: Optional[str] = None,
+            **kwargs: Any
         ) -> List[Tuple[Document, float]]:
         """This function performs a similarity search.
         
@@ -91,6 +92,18 @@ class BaseVectorStore:
                      distance_metric: Optional[str]="COSINE"
                      ) -> None:
         """This function creates an index.
+        
+        Args:
+            index_name: the index name
+        Returns:
+            none
+        """
+
+    @abstractmethod
+    def drop_index(self, 
+                     index_name: str
+                     ) -> None:
+        """This function drop an index.
         
         Args:
             index_name: the index name

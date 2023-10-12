@@ -17,6 +17,12 @@ from app.utils.conversation.customprompt import *
 from app.utils.conversation import Message, Answer, Source
 from app.utils.index import get_indexer
 
+from app.utils.agent.base import AgentExecutor
+from app.utils.agent.retrieval import get_doc_retrieval_agent
+from app.utils.agent.mdrt import get_mdrt_qna_agent
+
+from app.utils.conversation.intent import LLMIntentDetector
+from app.utils.conversation.customprompt import DEFAULT_PROMPT, CHAT_SUMMARIZATION_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +45,10 @@ class LLMChatBot:
         self.embeddings = llm_helper.get_embeddings()
 
         self.indexer = get_indexer(config)
+
+        self.llm_intent_detector = LLMIntentDetector(config=self.config)
+
+        self.default_prompt = DEFAULT_PROMPT
 
     def initialize_session(self, user_meta: Dict) -> Message:
         """Initialize a session.
@@ -73,16 +83,28 @@ class LLMChatBot:
 
         raise NotImplementedError
     
-    def detect_intent(self, question: str, session_id: str) -> str:
+    def detect_intent(self, question: str) -> str:
         """Detect the intent of the question.
         
         Args:
             question: the question
-            session_id: the session id
         """
 
-        raise NotImplementedError
+        return self.llm_intent_detector.detect_intent(question)
     
+    def _summarize_chat_history(self, chat_history) -> str:
+
+        """Summarize the chat history."""
+
+        # get a chat completion from the formatted messages
+        summarized_chat = self.llm(
+            CHAT_SUMMARIZATION_PROMPT.format_prompt(
+                chat=chat_history, 
+            ).to_messages()
+        ).content
+
+        return summarized_chat
+
     def standardize_glossary(self, question: str) -> str:
         """Standardize the glossary."""
 
@@ -101,7 +123,24 @@ class LLMChatBot:
 
         return chat_history_concatenated
     
-    def rephrase_question(self, question: str, chat_history: List[Message]) -> str:
+    def _parse_rephrased_question(self, rephrased_question: str):
+        """Parse the rephrased question."""
+
+        # The rephrased question is in the format of: rephrased_question [[[keyword1, keyword2, keyword3]]]
+
+        # Get the keywords using re search
+        keywords = re.search(r'\[\[\[.*?\]\]\]', rephrased_question)
+
+        if keywords is not None:
+            keywords = keywords.group().replace('[[[', '').replace(']]]', '').split(',')
+
+            keywords = " ".join([keyword.strip() for keyword in keywords])
+
+        # the rephrased question without keywords
+        rephrased_question = re.sub(r'\[\[\[.*?\]\]\]', '', rephrased_question).strip()
+        return rephrased_question, keywords
+
+    def rephrase_question(self, question: str, chat_history: str):
         """Rephrase the question based on the chat history.
         
         Args:
@@ -110,25 +149,30 @@ class LLMChatBot:
         """
 
         if chat_history is None or len(chat_history) == 0:
-            return question
+            return question, None
         
+        # chat_prompt = ChatPromptTemplate.from_messages(
+        #     [SYSTEM_MESSAGE_PROMPT_REPHRASE_Q, HUMAN_MESSAGE_PROMPT_REPHRASE_Q]
+        # )
+
+        # Use rephase with keyword prompt
         chat_prompt = ChatPromptTemplate.from_messages(
-            [SYSTEM_MESSAGE_PROMPT_REPHRASE_Q, HUMAN_MESSAGE_PROMPT_REPHRASE_Q]
+            [SYSTEM_MESSAGE_PROMPT_REPHRASE_KEYWORD, HUMAN_MESSAGE_PROMPT_REPHRASE_KEYWORD]
         )
 
-        # chat_history_concatenated = '\n'.join([chat.text for chat in chat_history])
-        chat_history_concatenated = self.concatenate_chat_history(chat_history)
-        # logger.debug(f'Chat history concatenated: {chat_history_concatenated}')
-
         # get a chat completion from the formatted messages
-        rephased_question = self.llm(
+        output = self.llm(
             chat_prompt.format_prompt(
                 question=question,
-                chat_history=chat_history_concatenated, 
+                chat_history=chat_history, 
             ).to_messages()
         ).content
 
-        return rephased_question
+        logger.info(f'Output: {output}')
+
+        rephrased_question, keywords = self._parse_rephrased_question(output)
+
+        return rephrased_question, keywords
 
     def get_chat_history(self, question: str, session_id: str, search_type: str) -> List[Message]:
         """
@@ -153,7 +197,7 @@ class LLMChatBot:
     def _get_semantic_answer_custom(
             self, 
             message: Message, 
-            index_name: str = None, 
+            index_name: str = None,
             condense_question: bool = True
         ) -> Answer:
         """
@@ -162,7 +206,6 @@ class LLMChatBot:
         Args:
             question: the question
             index_name: the index name
-            condense_question: whether to condense the question
         Returns:
             the answer
         """
@@ -188,69 +231,84 @@ class LLMChatBot:
         question = self.standardize_glossary(message.text)
 
         chat_history = self.get_chat_history(question, message.session_id, self.config.CHAT_HISTORY_SEARCH_TYPE)
+        chat_history = self.concatenate_chat_history(chat_history)
 
-        # if condense question
+        keywords = None
+
         if condense_question:
-            
-            logger.info("Condensing the question based on the chat history")
-            question = self.rephrase_question(question, chat_history)
-            logger.debug(f'Condensed question: {question}')
-            
-            # get related documents
-            related_documents = self.indexer.similarity_search(question, index_name=index_name)
+            # Concatenate the chat history
+            logger.info("Condesing question")
+            question_with_chat_history, keywords = self.rephrase_question(question, chat_history)
 
-            # concatenate the documents
-            documents = self.concatenate_documents(related_documents)
-
-            # concatenate the chat history
-            chat_history = self.concatenate_chat_history(chat_history)
-
-            # logger.debug(f'Concatenated documents: {documents}')
-
-            chat_prompt = ChatPromptTemplate.from_messages(
-                [SYSTEM_MESSAGE_PROMPT_QA_W_HISTORY, HUMAN_MESSAGE_PROMPT_QA_W_HISTORY]
-            )
-
-            # get a chat completion from the formatted messages
-            answer = self.llm(
-                chat_prompt.format_prompt(
-                    summary=documents,
-                    chat_history=chat_history,
-                    question=question, 
-                ).to_messages()
-            ).content
-
-        # dont condense question
         else:
-            logger.info("Don't condense the question")
+            logger.info("Dont condese question")
+            
+            # Summarize the chat history
+            # chat_history = self._summarize_chat_history(chat_history)
 
-            chat_history = self.concatenate_chat_history(chat_history)
             question_with_chat_history = f'{chat_history}\n{question}'
 
-            logger.debug(f'Question with chat history: {question_with_chat_history}')
+        logger.info(f'Question with chat history: {question_with_chat_history}')
+        logger.info(f'Keywords: {keywords}')
+        
+        intent = self.detect_intent(question_with_chat_history)
 
+        if intent == "DocRetrieval":
             # get related documents
             logger.info(f"indices: {index_name}")
-            related_documents = self.indexer.similarity_search(question_with_chat_history, index_name=index_name)
 
+            def isEnglish(s):
+                try:
+                    s.encode(encoding='utf-8').decode('ascii')
+                except UnicodeDecodeError:
+                    return False
+                else:
+                    return True
+                
+            
+
+
+            if keywords is None:
+                related_documents = self.indexer.similarity_search(question_with_chat_history, index_name=index_name)
+            else:
+                # check if keywords contains non english characters
+                # if it does, then do not use the keywords
+                if isEnglish(keywords):
+                    related_documents = self.indexer.similarity_search(question_with_chat_history, index_name=index_name, search_text=keywords)
+                else:
+                    related_documents = self.indexer.similarity_search(question_with_chat_history, index_name=index_name)
+
+            related_documents_filtered = []
+            for document, score in related_documents:
+                if score >= self.config.DOCUMENT_SIMILARITY_THRESHOLD:
+                    related_documents_filtered.append(document)
             # concatenate the documents
-            documents = self.concatenate_documents(related_documents)
+            documents = self.concatenate_documents(related_documents_filtered)
 
-            # logger.debug(f'Concatenated documents: {documents}')
+            agent = get_doc_retrieval_agent(self.llm)
 
-            chat_prompt = ChatPromptTemplate.from_messages(
-                [SYSTEM_MESSAGE_PROMPT_QA_W_HISTORY, HUMAN_MESSAGE_PROMPT_QA_W_HISTORY]
-            )
+            executor = AgentExecutor(agent)
 
+            answer = executor.run(question=question, chat_history=chat_history, summary=documents)['output']
+
+
+        elif intent == "MDRT_QnA":
+            agent = get_mdrt_qna_agent(self.llm)
+
+            executor = AgentExecutor(agent)
+
+            answer = executor.run(question=question, chat_history=chat_history)['output']
+
+
+        else:
             # get a chat completion from the formatted messages
             answer = self.llm(
-                chat_prompt.format_prompt(
-                    summary=documents,
-                    chat_history=chat_history,
-                    question=question, 
-                ).to_messages()
-            ).content
-        
+                self.default_prompt.format_prompt(
+                        chat_history=chat_history,
+                        question=question, 
+                    ).to_messages()
+                ).content
+
         # Add the question and answer to the history
 
         question_message = message
@@ -409,8 +467,8 @@ class LLMChatBot:
         result = ''
 
         for i in range(0, len(documents)):
-            result += f"Content: {documents[i][0].page_content}\n"
-            result += f"Source name: {documents[i][0].metadata['source']}\n\n"
+            result += f"Content: {documents[i].page_content}\n"
+            result += f"Source name: {documents[i].metadata['source']}\n\n"
 
         return result
     

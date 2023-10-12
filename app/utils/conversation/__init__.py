@@ -6,6 +6,8 @@ from typing import Dict, List, Optional, Tuple
 from app.config import Config
 from app.utils.file.storage import get_storage_client, BLOB_STORAGE_PATERN, is_local_file
 
+logger = logging.getLogger(__name__)
+
 class Message:
     """This class represents a Message."""
 
@@ -65,8 +67,11 @@ class Source:
             
             file_name = self._extract_file_name(self.source_urls[key])
             # if the source is a blob url, then transform it to a sas url
+            logger.info(f"Source url: {self.source_urls[key]}")
             if BLOB_STORAGE_PATERN in self.source_urls[key]:
-                self.source_urls[key] = blob_storage_client.get_sas_url(self.source_urls[key])
+                # This is a blob url
+                container, blob_name = blob_storage_client._extract_container_blob_name(self.source_urls[key])
+                self.source_urls[key] = blob_storage_client.get_blob_sas(container, blob_name)
 
             # if it is a file, then add file:// to the url
             elif is_local_file(self.source_urls[key]):

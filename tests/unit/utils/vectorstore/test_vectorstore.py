@@ -11,6 +11,7 @@ from app.utils.llm import LLMHelper
 from app.utils.vectorstore import get_vector_store
 from app.utils.vectorstore.faiss import FAISSExtended
 from app.utils.vectorstore.redis import RedisExtended
+from app.utils.vectorstore.azuresearch import AzureSearch
 from app.config import Config
 
 logger = logging.getLogger(__name__)
@@ -38,16 +39,22 @@ def test_get_vector_store():
 
     assert isinstance(vector_store, RedisExtended)
 
+    # Load Redis vector store
+    Config.VECTOR_STORE_TYPE = 'azuresearch'
+    vector_store = get_vector_store(config)
+
+    assert isinstance(vector_store, AzureSearch)
+
     # Restore old config
     Config.VECTOR_STORE_TYPE = old_vector_store_type
 
 
 
 @pytest.fixture()
-def vector_store():
+def vector_stores():
     """This function returns all supported vector stores."""
 
-    vector_store = {}
+    vector_stores = {}
 
     # Load config
     config = Config()
@@ -57,30 +64,40 @@ def vector_store():
 
     # Load FAISS vector store
     Config.VECTOR_STORE_TYPE = 'faiss'
-    vector_store['faiss'] = get_vector_store(config)
+    vector_stores['faiss'] = get_vector_store(config)
 
     # TODO: we need to mock up the redis server for unit test
     # # Load Redis vector store
     # Config.VECTOR_STORE_TYPE = 'redis'
     # vector_store['redis'] = get_vector_store(config)
 
+    # TODO: we need to mock up the azure cognitive search for unit test
+    # Load Azure Search vector store
+    Config.VECTOR_STORE_TYPE = 'azuresearch'
+    vector_stores['azuresearch'] = get_vector_store(config)
+
     # Restore old config
     Config.VECTOR_STORE_TYPE = old_vector_store_type
 
-    yield vector_store
+    yield vector_stores
 
     # Tear down
     if os.path.exists(config.FAISS_LOCAL_FILE_INDEX):
         shutil.rmtree(config.FAISS_LOCAL_FILE_INDEX)
 
-def test_load_local(vector_store):
+    for key, vector_store in vector_stores.items():
+        if key != 'faiss':
+            if vector_store.check_existing_index('test_index_in_unit_test'):
+                vector_store.drop_index('test_index_in_unit_test')
+
+def test_load_local(vector_stores):
     """This function tests load local function for vector store."""
 
     config = Config()
 
 
 
-    for key, vector_store in vector_store.items():
+    for key, vector_store in vector_stores.items():
         if key == 'faiss':
             logger.info('Testing FAISS load from file')
 
@@ -93,38 +110,64 @@ def test_load_local(vector_store):
             shutil.rmtree(config.FAISS_LOCAL_FILE_INDEX)
 
 
-def test_add_documents(vector_store):
+def test_check_existing_index(vector_stores):
+    """This function tests check existing index function for vector store."""
+
+    for key, vector_store in vector_stores.items():
+        if key != 'faiss':
+            assert vector_store.check_existing_index('test_index_in_unit_test') == False
+
+def test_create_and_drop_index(vector_stores):
+    """This function tests drop index function for vector store."""
+
+    for key, vector_store in vector_stores.items():
+        if key != 'faiss':
+            vector_store.create_index('test_index_in_unit_test')
+
+            assert vector_store.check_existing_index('test_index_in_unit_test') == True
+
+            vector_store.drop_index('test_index_in_unit_test')
+
+            assert vector_store.check_existing_index('test_index_in_unit_test') == False
+
+            
+def test_add_documents(vector_stores):
     """This function tests add documents function for vector store."""
 
     doc =  Document(page_content="This is a test document only.", metadata={"source": "local"})
 
-    for key, vector_store in vector_store.items():
+    for key, vector_store in vector_stores.items():
         if key == 'faiss':
             vector_store.add_documents([doc])
 
-        elif key == 'redis':
+        else:
             metadata_schema = {"source": "text"}
             vector_store.create_index('test_add_document_in_unit_test', metadata_schema=metadata_schema)
             vector_store.add_documents([doc], index_name='test_add_document_in_unit_test')
             vector_store.drop_index('test_add_document_in_unit_test')
 
-def test_add_texts(vector_store):
+def test_add_texts(vector_stores):
     """This function tests add texts function for vector store."""
 
     text = "This is a test document only."
     metadata = {"source": "local"}
 
-    for key, vector_store in vector_store.items():
+    for key, vector_store in vector_stores.items():
         if key == 'faiss':
             vector_store.add_texts([text], [metadata])
+        else:
+            metadata_schema = {"source": "text"}
+            vector_store.create_index('test_add_document_in_unit_test', metadata_schema=metadata_schema)
+            vector_store.add_texts([text], [metadata], index_name='test_add_document_in_unit_test')
+            vector_store.drop_index('test_add_document_in_unit_test')
 
-def test_similarity_search(vector_store):
+def test_similarity_search(vector_stores):
     """This function tests similarity search function for vector store."""
 
     query = "This is a test query only."
     doc1 =  Document(page_content="This is a test document from local.", metadata={"source": "local"})
 
-    for key, vector_store in vector_store.items():
+    for key, vector_store in vector_stores.items():
         if key == 'faiss':
             vector_store.add_documents([doc1])
             vector_store.add_texts(["This is a test document from web."], [{"source": "web"}])
@@ -135,20 +178,31 @@ def test_similarity_search(vector_store):
             assert result[0][0].metadata["source"] == "web"
             
         
-        elif key == 'redis':
+        else:
             metadata_schema = {"source": "text"}
-            vector_store.create_index('test_similarity_search_in_unit_test', metadata_schema=metadata_schema)
-            vector_store.add_documents([doc1], index_name='test_similarity_search_in_unit_test')
-            vector_store.add_texts(["This is a test document from web."], [{"source": "web"}], index_name='test_similarity_search_in_unit_test')
-            result = vector_store.similarity_search(query, filter={"source": "web"}, index_name='test_similarity_search_in_unit_test')
+            vector_store.create_index('test_index_in_unit_test', metadata_schema=metadata_schema)
+            vector_store.add_documents([doc1], index_name='test_index_in_unit_test')
+            vector_store.add_texts(["This is a test document from web."], [{"source": "web"}], index_name='test_index_in_unit_test')
+            result = vector_store.similarity_search(query, filter={"source": "web"}, index_name='test_index_in_unit_test')
 
             assert len(result) > 0
             assert result[0][0].page_content == "This is a test document from web."
             assert result[0][0].metadata["source"] == "web"
 
-            vector_store.drop_index('test_similarity_search_in_unit_test')
+            vector_store.drop_index('test_index_in_unit_test')
 
-def test_get_retiever(vector_store):
+    # Special test case for Azure Search
+
+    # if "azuresearch" in vector_stores:
+    #     azure_search = vector_stores["azuresearch"]
+
+    #     query = "What knowledge do you have?"
+    #     result = azure_search.similarity_search(query, index_name='embeddings')
+
+    #     assert len(result) > 0
+    #     logger.info(result[0][0].metadata)
+
+def test_get_retiever(vector_stores):
     """This function tests get retiever function for vector store."""
 
     text_splitter = TokenTextSplitter(chunk_size=2000, chunk_overlap=500)
@@ -159,7 +213,7 @@ def test_get_retiever(vector_store):
     documents = [document_A, document_B, document_C]
     query = "Who is Elon Musk?"
 
-    for key, vector_store in vector_store.items():
+    for key, vector_store in vector_stores.items():
         if key == 'faiss':
             for doc in documents:
                 chunks = text_splitter.split_documents(doc)
@@ -173,23 +227,3 @@ def test_get_retiever(vector_store):
             
             logger.info(result[0].page_content)
 
-
-def test_check_existing_index(vector_store):
-    """This function tests check existing index function for vector store."""
-
-    for key, vector_store in vector_store.items():
-        if key == 'redis':
-            assert vector_store.check_existing_index('test_index_in_unit_test') == False
-
-def test_create_and_drop_index(vector_store):
-    """This function tests drop index function for vector store."""
-
-    for key, vector_store in vector_store.items():
-        if key == 'redis':
-            vector_store.create_index('test_index_in_unit_test')
-
-            assert vector_store.check_existing_index('test_index_in_unit_test') == True
-
-            vector_store.drop_index('test_index_in_unit_test')
-
-            assert vector_store.check_existing_index('test_index_in_unit_test') == False
