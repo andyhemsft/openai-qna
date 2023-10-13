@@ -44,6 +44,10 @@ class GetMDRTReqTool(BaseTool):
 
         result = self.db.execute(query)
 
+        if len(result) == 0:
+            answer = f"Cannot find the requirement for {category} in {region}. Please provide the correct information."
+            return answer
+
         answer = f"To achieve {category}, the agent must surpass the {region} thresholds requirement for {result[0][2]} FYCC, {result[0][3]} FYP, {result[0][4]} Case Count"
         
         return answer
@@ -73,6 +77,10 @@ class GetAgentSalesTool(BaseTool):
         query = f"SELECT Name, Region, FYCC, FYP, Case_Count FROM Agent_Sales WHERE Name = '{agent_name}'"
 
         result = self.db.execute(query)
+
+        if len(result) == 0:
+            answer = f"Cannot find your name: {agent_name} in the database. Please provide the correct information."
+            return answer
 
         answer = f"{agent_name} is in {result[0][1]} Region, his sales record is: {result[0][2]} FYCC, {result[0][3]} FYP, {result[0][4]} Case Count"
         
@@ -104,6 +112,10 @@ class CheckRequirementMeetTool(BaseTool):
 
         result = self.db.execute(query)
 
+        if len(result) == 0:
+            answer = f"Cannot find your name: {agent_name} in the database. Please provide the correct information."
+            return answer
+
         region = result[0][1]
         fycc = result[0][2]
         fyp = result[0][3]
@@ -113,6 +125,10 @@ class CheckRequirementMeetTool(BaseTool):
         query = f"SELECT Region, Category, FYCC, FYP, Case_Count FROM MDRT_Requirement WHERE Region = '{region}' AND Category = '{category}'"
 
         result = self.db.execute(query)
+
+        if len(result) == 0:
+            answer = f"Cannot find the requirement for {category} in {region}. Please provide the correct information."
+            return answer
 
         fycc_requirement = result[0][2]
         fyp_requirement = result[0][3]

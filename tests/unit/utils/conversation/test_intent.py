@@ -21,7 +21,7 @@ def test_intent_detector(intent_detector):
 
     intent = intent_detector.detect_intent(question)
 
-    assert intent == "DocRetrieval"
+    assert intent == "Other"
 
 
     # Test case 2

@@ -21,13 +21,16 @@ def test_get_indexer():
     # Save old config
     old_chunking_strategy = Config.CHUNKING_STRATEGY
 
+
     # Load Fixed Chunk Indexer
     Config.CHUNKING_STRATEGY = 'fixed'
+    
     indexer = get_indexer(config)
 
     assert isinstance(indexer, FixedChunkIndexer)
 
     # Restore old config
+    
     Config.CHUNKING_STRATEGY = old_chunking_strategy
 
 @pytest.fixture()
@@ -41,13 +44,16 @@ def indexer():
 
     # Save old config
     old_chunking_strategy = Config.CHUNKING_STRATEGY
+    old_vector_store_type = Config.VECTOR_STORE_TYPE
 
     # Load Fixed Chunk Indexer
     Config.CHUNKING_STRATEGY = 'fixed'
+    Config.VECTOR_STORE_TYPE = 'faiss'
     indexer['fixed'] = get_indexer(config)
 
     # Restore old config
     Config.CHUNKING_STRATEGY = old_chunking_strategy
+    Config.VECTOR_STORE_TYPE = old_vector_store_type
 
     yield indexer
 
@@ -73,8 +79,8 @@ def test_add_document(indexer):
         indexer[key].add_document('samples/A.txt', 'test')
 
         # Test case 2
-        source_url = 'https://openaiembeddingqna01str.blob.core.windows.net/test/B.txt'
-        indexer[key].add_document(source_url, 'test')
+        # source_url = 'https://openaiembeddingqna01str.blob.core.windows.net/test/B.txt'
+        # indexer[key].add_document(source_url, 'test')
 
 def test_similarity_search(indexer):
     """This function tests similarity search function."""

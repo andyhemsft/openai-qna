@@ -34,8 +34,8 @@ The rephased question must be in the same language as the original question.
 
 Step 1: Rephrase the question
 Step 2: Extract keywords from the rephrased question.
-Step 4: If the question is not rephased, extract keywords from the original question.
-Step 5: Translate the keywords into English if necessary
+Step 3: If the question is not rephased, extract keywords from the original question.
+Step 4: Translate the keywords into English if necessary
 
 The final output should be in the following format:
 Rephased questions. [[[keyword1, keyword2, keyword3]]]
@@ -159,6 +159,7 @@ Step 3: Extract keywords from the rephrased question.
 Step 4: If the question is not rephased, extract keywords from the original question.
 Step 5: Double check if the keywords are extracted. Otherwise, repeat step 3.
 Step 6: Translate the keywords into English
+Step 7: Double check if the keywords are translated. Otherwise, repeat step 6.
 
 The final answer should be in the following format:
 Final Answer: Rephased questions. [[[keyword1, keyword2, keyword3]]]

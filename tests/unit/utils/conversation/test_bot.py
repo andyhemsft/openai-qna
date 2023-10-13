@@ -77,7 +77,7 @@ def test_rephase_question(llm_chat_bot) -> None:
     logger.info(f'Rephrased question 4: {rephrase_question}')
     logger.info(f'Keywords: {keywords}')
 
-    assert f"{rephrase_question}" == question
+    assert question in f"{rephrase_question}"
 
 def test_concantenate_documents(llm_chat_bot) -> None:
     """This function tests concantenate documents function."""

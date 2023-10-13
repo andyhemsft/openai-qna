@@ -36,7 +36,10 @@ def test_api_chat(client):
 
     # Test case 2
     # Let us index a document first
+    old_vector_store_type = Config.VECTOR_STORE_TYPE
+    Config.VECTOR_STORE_TYPE = 'faiss'
     indexer = get_indexer(Config())
+    Config.VECTOR_STORE_TYPE = old_vector_store_type
     index_name = 'test_index'
 
     documents = ['samples/A.txt', 'samples/B.txt', 'samples/C.txt']

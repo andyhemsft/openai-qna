@@ -81,7 +81,7 @@ class Config():
 
     # Similarity threshold parameters
     TOP_K_RELATED_DOCUMENTS = os.getenv('TOP_K_RELATED_DOCUMENTS', 3)
-    CHAT_HISTORY_SEARCH_TYPE = os.getenv('CHAT_HISTORY_SEARCH_TYPE', 'most_related') # most_related, most_recent
+    CHAT_HISTORY_SEARCH_TYPE = os.getenv('CHAT_HISTORY_SEARCH_TYPE', 'most_recent') # most_related, most_recent
     CHAT_HISTORY_SIMILARITY_THRESHOLD = os.getenv('CHAT_HISTORY_SIMILARITY_THRESHOLD', 0)
     DOCUMENT_SIMILARITY_THRESHOLD = os.getenv('DOCUMENT_SIMILARITY_THRESHOLD', 0.5)
 

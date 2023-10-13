@@ -20,6 +20,113 @@ If you can't find it, reply politely that the information is not in the knowledg
 Detect the language of the last question and answer in the same language. 
 If asked for enumerations list all of them and do not invent any.
 If the question is a greeting, reply with a greeting and ask what I can help.
+
+Here is a good example with citations:
+
+Content: Fee Schedule
+Important information for customers
+Item
+Charge
+HSBC Premier Mastercard® Credit Card
+HSBC Advance Visa Platinum Card
+HSBC Red Credit Card
+HSBC Visa Signature Card
+HSBC EveryMile Credit Card
+Platinum Card (incl. green credit card)
+Visa Gold, Gold Mastercard
+Visa, Mastercard
+iCAN Card
+US dollar Visa Gold
+HSBC Pulse UnionPay Dual Currency Diamond Card
+UnionPay Dual Currency Card
+Annual fee
+Primary card
+waived permanently
+waived permanently
+waived permanently
+HK$2,000
+HK$2,000
+HK$1,800
+HK$600
+HK$300
+HK$300
+US$80
+HK$1,800
+HK$300
+Additional card (separate billing)
+N/A
+N/A
+N/A
+N/A
+N/A
+N/A
+HK$600
+HK$300
+N/A
+US$80
+N/A
+N/A
+Additional card (combined billing)
+waived permanently
+waived permanently
+waived permanently
+HK$1,000
+N/A
+HK$900
+HK$300
+HK$150
+N/A
+US$40
+HK$900
+HK$150
+Card replacement fee
+Card replacement before renewal
+waived
+HK$100
+HK$100
+HK$100
+HK$100
+HK$100
+HK$100
+HK$100
+HK$100
+US$13
+HK$100
+HK$100
+Virtual card account
+N/A
+N/A
+N/A
+N/A
+N/A
+N/A
+N/A
+N/A
+HK$100
+N/A
+N/A
+N/A
+Cash advance fee
+From ATM (per transaction)
+Handling fee of 1% on the cash advance amount (minimum HK$100)1
+Handling fee of 1% on the cash advance amount (minimum US$7)
+Handling fee of 1% on the cash advance amount (minimum HK$100 for HKD sub-account/minimum RMB100 for RMB sub-account)1
+Over-the-counter advances (per transaction)
+Handling fee of 1% on the cash advance amount (minimum HK$120)1
+Handling fee of 1% on the cash advance amount (minimum US$10)1
+N/A
+Minimum payment due
+Total fees and charges currently billed to the card statement plus 1% of the statement balance (excluding any fees and charges currently billed) as at the statement date (minimum HK$300), plus overdue or overlimit due whichever is higher
+Equivalent to the full amount of the statement balance
+Total fees and charges currently billed to each sub-account statement plus 1% of the statement balance (excluding any fees and charges currently billed) of each sub-account as at the statement date (minimum HK$300 for HKD sub-account/RMB300 for RMB sub-account), plus the overdue or overlimit due of each sub-account whichever is higher
+Peace of mind and financial flexibility wherever you go
+
+Source name: https://openaidemohkstr.blob.core.windows.net/documents/converted/hsbc-premier-credit-card-welcome-pack.pdf.txt
+
+Question: What is cash advance fee for iCAN card?
+
+Final Answer: THe handling fee of iCAN card is 1% on the cash advance amount (minimum HK$100) from ATM (per transaction). 
+Over-the-counter advances (per transaction) is 1% on the cash advance amount (minimum HK$120) [[https://openaidemohkstr.blob.core.windows.net/documents/converted/hsbc-premier-credit-card-welcome-pack.pdf.txt]]
 """
 #Try to provide an answer as concise as possible, but do not sacrifice the quality of the answer.
 

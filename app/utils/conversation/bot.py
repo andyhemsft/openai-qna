@@ -140,7 +140,15 @@ class LLMChatBot:
             keywords = " ".join(keywords)
 
         # Get the rephrased question
-        rephrased_question = rephrased_question.split('Final Answer: ')[1].split(' [[[[')[0]
+        rephrased_question = rephrased_question.split('Final Answer: ')
+
+        if len(rephrased_question) > 1:
+            # Dont contain the keywords
+            rephrased_question = rephrased_question[1].split('[[[')[0].strip()
+
+        else:
+            # THe Final Answer is not in the output
+            rephrased_question = rephrased_question[0].split('[[[')[0].strip()
 
         return rephrased_question, keywords
 
@@ -174,7 +182,7 @@ class LLMChatBot:
             ).to_messages()
         ).content
 
-        logger.info(f'Output: {output}')
+        logger.info(f'Output of rephase question prompt: {output}')
 
         rephrased_question, keywords = self._parse_rephrased_question(output)
 
