@@ -31,6 +31,11 @@ Input:
 Output:
 DocRetrieval
 
+Input:
+'''它提供什麼服務？'''
+
+Output:
+DocRetrieval
 
 Input:
 '''What is HSBC Life Insurance'''
@@ -69,7 +74,14 @@ Input:
 
 Output:
 Other
+
+Input:
+'''Tell me about AIA'''
+
+Output:
+Other
 """
+
 
 
 human_message_template = """

@@ -343,19 +343,23 @@ class AzureSearch(BaseVectorStore):
         docs_with_scores: List[Tuple[Document, float]] = []
 
         if "search_text" in kwargs:
-            logger.info(f"Search text: {kwargs['search_text']}")
-            # scale_factor = 2
-            vector = Vector(value=self.embeddings.embed_query(query), k=k, fields=FIELDS_CONTENT_VECTOR)
+            logger.info(f"Using Hybrid Search with text: {kwargs['search_text']}")
+            scale_factor = 2
+            vector = Vector(value=self.embeddings.embed_query(query), k=k*scale_factor, fields=FIELDS_CONTENT_VECTOR)
             results = search_client.search(  
                 search_text=kwargs["search_text"], 
                 search_fields=['content'],
                 search_mode='any',
+                query_type='semantic',
+                query_language='en-us',
+                semantic_configuration_name='my-semantic-configuration',
                 filter=filter_query, 
-                # vectors= [vector],
+                vectors= [vector],
                 select=selection,
                 top=k
             )
         else:
+            logger.info(f"Using pure vector search")
             vector = Vector(value=self.embeddings.embed_query(query), k=k, fields=FIELDS_CONTENT_VECTOR)
             results = search_client.search(  
                 search_text=None, 
@@ -378,6 +382,10 @@ class AzureSearch(BaseVectorStore):
                 page_content=result["content"],
                 metadata=metadata,
             )
-            docs_with_scores.append((doc, result["@search.score"]))
+
+            if "search_text" in kwargs:
+                docs_with_scores.append((doc, result["@search.reranker_score"]))
+            else:
+                docs_with_scores.append((doc, result["@search.score"]))
 
         return docs_with_scores

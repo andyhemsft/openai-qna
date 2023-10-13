@@ -3,6 +3,7 @@ from typing import List, Dict, Tuple
 import uuid
 from datetime import datetime
 import re
+import copy
 
 from langchain.chains.llm import LLMChain
 from langchain.chains.chat_vector_db.prompts import CONDENSE_QUESTION_PROMPT
@@ -42,6 +43,7 @@ class LLMChatBot:
         llm_helper = LLMHelper(config)
 
         self.llm = llm_helper.get_llm()
+        self.llm_light = llm_helper.get_llm(light_weight=True)
         self.embeddings = llm_helper.get_embeddings()
 
         self.indexer = get_indexer(config)
@@ -126,18 +128,20 @@ class LLMChatBot:
     def _parse_rephrased_question(self, rephrased_question: str):
         """Parse the rephrased question."""
 
-        # The rephrased question is in the format of: rephrased_question [[[keyword1, keyword2, keyword3]]]
+        # The rephrased question is in the format of: 
+        # Final Answer: rephrased_question [[[keyword1, keyword2, keyword3]]]
 
-        # Get the keywords using re search
-        keywords = re.search(r'\[\[\[.*?\]\]\]', rephrased_question)
+        # Locate the keywords using regex first, dont use split
+        keywords = re.findall(r'\[\[\[.*?\]\]\]', rephrased_question)
 
-        if keywords is not None:
-            keywords = keywords.group().replace('[[[', '').replace(']]]', '').split(',')
+        if len(keywords) > 0:
+            keywords = keywords[0].split('[[[')[1].split(']]]')[0].split(',')
+            keywords = [keyword.strip() for keyword in keywords]
+            keywords = " ".join(keywords)
 
-            keywords = " ".join([keyword.strip() for keyword in keywords])
+        # Get the rephrased question
+        rephrased_question = rephrased_question.split('Final Answer: ')[1].split(' [[[[')[0]
 
-        # the rephrased question without keywords
-        rephrased_question = re.sub(r'\[\[\[.*?\]\]\]', '', rephrased_question).strip()
         return rephrased_question, keywords
 
     def rephrase_question(self, question: str, chat_history: str):
@@ -148,17 +152,19 @@ class LLMChatBot:
             chat_history: the chat history
         """
 
-        if chat_history is None or len(chat_history) == 0:
-            return question, None
+        # if chat_history is None or len(chat_history) == 0:
+        #     return question, None
         
         # chat_prompt = ChatPromptTemplate.from_messages(
         #     [SYSTEM_MESSAGE_PROMPT_REPHRASE_Q, HUMAN_MESSAGE_PROMPT_REPHRASE_Q]
         # )
 
         # Use rephase with keyword prompt
-        chat_prompt = ChatPromptTemplate.from_messages(
-            [SYSTEM_MESSAGE_PROMPT_REPHRASE_KEYWORD, HUMAN_MESSAGE_PROMPT_REPHRASE_KEYWORD]
-        )
+        # chat_prompt = ChatPromptTemplate.from_messages(
+        #     [SYSTEM_MESSAGE_PROMPT_REPHRASE_KEYWORD, HUMAN_MESSAGE_PROMPT_REPHRASE_KEYWORD]
+        # )
+
+        chat_prompt = REPHASE_QUESTION_PROMPT
 
         # get a chat completion from the formatted messages
         output = self.llm(
@@ -277,7 +283,7 @@ class LLMChatBot:
                     related_documents = self.indexer.similarity_search(question_with_chat_history, index_name=index_name, search_text=keywords)
                 else:
                     related_documents = self.indexer.similarity_search(question_with_chat_history, index_name=index_name)
-
+            
             related_documents_filtered = []
             for document, score in related_documents:
                 if score >= self.config.DOCUMENT_SIMILARITY_THRESHOLD:
@@ -285,6 +291,7 @@ class LLMChatBot:
             # concatenate the documents
             documents = self.concatenate_documents(related_documents_filtered)
 
+            # TODO: add parameter to set llm light or not
             agent = get_doc_retrieval_agent(self.llm)
 
             executor = AgentExecutor(agent)
@@ -302,6 +309,7 @@ class LLMChatBot:
 
         else:
             # get a chat completion from the formatted messages
+            logger.info("Getting answer from LLM without external knowledge")
             answer = self.llm(
                 self.default_prompt.format_prompt(
                         chat_history=chat_history,
@@ -327,13 +335,25 @@ class LLMChatBot:
             is_bot=1
         )
 
-        # Dont replace the source name with citations in the chat history, otherwise it will 
-        # confuse the model when generating the answer
-        self.history_manager.add_qa_pair(question_message, answer_message)
+        # TODO: Dont contain source name in the chat history, otherwise it will 
+        # confuse the model when generating the answer. Should log the original answer in long term store in the future
 
-        logger.debug(f'Answer before replace citation: {answer_message.text}')
-        answer_message, source = self.insert_citations_into_answer(answer_message)
-        logger.debug(f'Answer after replace citation: {answer_message.text}')
+        # The source name is in the format of: [[file_name]]
+        # e.g. [[A.txt]], [[https://test.blob.core.windows.net/test/A.txt]]
+
+        # Remove the source name from the answer
+        answer_removed_source_name = copy.deepcopy(answer_message)
+        answer_removed_source_name.text = re.sub(r'\[\[.*?\]\]', '', answer_message.text)
+
+        self.history_manager.add_qa_pair(question_message, answer_removed_source_name)
+
+        source = Source()
+        if intent == "DocRetrieval":
+            logger.debug(f'Answer before replace citation: {answer_message.text}')
+            answer_message, source = self.insert_citations_into_answer(answer_message)
+            logger.debug(f'Answer after replace citation: {answer_message.text}')
+
+        
 
         return Answer(answer_message, source)
 
@@ -468,7 +488,13 @@ class LLMChatBot:
 
         for i in range(0, len(documents)):
             result += f"Content: {documents[i].page_content}\n"
+
+            # Print the first 100 characters of the document
+            logger.info(f"Content: {documents[i].page_content[:100]}")
+            
             result += f"Source name: {documents[i].metadata['source']}\n\n"
+
+            logger.info(f"Source name: {documents[i].metadata['source']}")
 
         return result
     
@@ -504,6 +530,9 @@ class LLMChatBot:
 
         # Get the source urls
         source_urls = [source_name[2:-2] for source_name in source_names]
+
+        # remove duplications
+        source_urls = list(set(source_urls))
 
         # Map the source urls to be an index starting from 1
         source_url_index = {source_url: i+1 for i, source_url in enumerate(source_urls)}

@@ -30,8 +30,9 @@ class Config():
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
     OPENAI_API_VERSION = os.getenv('OPENAI_API_VERSION', '2023-05-15')
     OPENAI_ENGINE = os.getenv('OPENAI_ENGINE')
+    OPENAI_ENGINE_LIGHT = os.getenv('OPENAI_ENGINE_LIGHT')
     OPENAI_EMBEDDING_ENGINE = os.getenv('OPENAI_EMBEDDING_ENGINE')
-    OPENAI_TEMPERATURE = os.getenv('OPENAI_TEMPERATURE', 0.1) # Low temperature (temperature 0.1) to ensure reproducibility.
+    OPENAI_TEMPERATURE = os.getenv('OPENAI_TEMPERATURE', 0.0) # Low temperature (temperature 0.1) to ensure reproducibility.
     OPENAI_MAX_TOKENS = os.getenv('OPENAI_MAX_TOKENS', 1000)
     # for text-embedding-ada-002 model , you will obtain a high-dimensional array (vector) consisting of 1536 floating-point numbers
     OPENAI_EMBEDDING_SIZE = os.getenv('OPENAI_EMBEDDING_SIZE', 1536) 
@@ -82,7 +83,7 @@ class Config():
     TOP_K_RELATED_DOCUMENTS = os.getenv('TOP_K_RELATED_DOCUMENTS', 3)
     CHAT_HISTORY_SEARCH_TYPE = os.getenv('CHAT_HISTORY_SEARCH_TYPE', 'most_related') # most_related, most_recent
     CHAT_HISTORY_SIMILARITY_THRESHOLD = os.getenv('CHAT_HISTORY_SIMILARITY_THRESHOLD', 0)
-    DOCUMENT_SIMILARITY_THRESHOLD = os.getenv('DOCUMENT_SIMILARITY_THRESHOLD', 0.7)
+    DOCUMENT_SIMILARITY_THRESHOLD = os.getenv('DOCUMENT_SIMILARITY_THRESHOLD', 0.5)
 
     # SQL DB parameters
     SQL_CONNECTION_STRING = os.getenv('SQL_CONNECTION_STRING')

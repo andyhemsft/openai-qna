@@ -26,15 +26,19 @@ SYSTEM_MESSAGE_PROMPT_REPHRASE_Q = SystemMessagePromptTemplate.from_template(sys
 HUMAN_MESSAGE_PROMPT_REPHRASE_Q = HumanMessagePromptTemplate.from_template(human_question_template_rephrase_q)
 
 # For rephase question
-system_message_template_rephrase_keyword = """You are a proficient assistant, skilled in rephrasing questions and extracting the keywords based on prior conversations. 
+system_message_template_rephrase_keyword = """You are a proficient assistant, skilled in rephrasing questions and extracting keywords. 
 If a follow-up question is already self-contained, you simply repeat it. 
 If the rephrased question conveys the same meaning as the original question, you just repeat the original question. 
 However, if the follow-up question lacks context, you expertly rephrase it into a standalone question that includes all the necessary information for a complete answer.
-Always provide the keywords for the question in the output. The rephased question must be in the same language as the original question.
-The keywords must be translate into English.
+The rephased question must be in the same language as the original question.
 
-The output will be in the following format:
-This is the rephrased question in original language. [[[keyword1 in english, keyword2 in english, keyword3 in english]]]
+Step 1: Rephrase the question
+Step 2: Extract keywords from the rephrased question.
+Step 4: If the question is not rephased, extract keywords from the original question.
+Step 5: Translate the keywords into English if necessary
+
+The final output should be in the following format:
+Rephased questions. [[[keyword1, keyword2, keyword3]]]
 """
 
 
@@ -141,3 +145,32 @@ Summary:"""
 # Try not to repeat questions that have already been asked.
 
 CHAT_SUMMARIZATION_PROMPT = PromptTemplate(template=chat_summarization_template, input_variables=["chat"])
+
+
+rephase_question_template = """You are a proficient assistant, skilled in rephrasing questions based on the prior conversation. 
+If a follow-up question is already self-contained, you simply repeat it. 
+If the rephrased question conveys the same meaning as the original question, you just repeat the original question. 
+However, if the follow-up question lacks context, you expertly rephrase it into a standalone question that includes all the necessary information for a complete answer.
+The rephased question must be in the same language as the original question.
+Please do it step by step:
+Step 1: Check if the follow-up question is already self-contained
+Step 2: Rephrase the question if not self-contained
+Step 3: Extract keywords from the rephrased question.
+Step 4: If the question is not rephased, extract keywords from the original question.
+Step 5: Double check if the keywords are extracted. Otherwise, repeat step 3.
+Step 6: Translate the keywords into English
+
+The final answer should be in the following format:
+Final Answer: Rephased questions. [[[keyword1, keyword2, keyword3]]]
+
+Prior conversations:
+{chat_history}
+Follow up question: {question}
+Output:"""
+
+# After answering the question generate three very brief follow-up questions that the user would likely ask next.
+# Only use double angle brackets to reference the questions, e.g. <<Are there exclusions for prescriptions?>>.
+# Only generate questions and do not generate any text before or after the questions, such as 'Follow-up Questions:'.
+# Try not to repeat questions that have already been asked.
+
+REPHASE_QUESTION_PROMPT = PromptTemplate(template=rephase_question_template, input_variables=["chat_history", "question"])

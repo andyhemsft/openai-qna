@@ -1,5 +1,6 @@
 import os
 import logging
+from typing import Any
 
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
@@ -18,7 +19,7 @@ class LLMHelper:
 
         self.config = config
 
-    def get_llm(self, temperature: float = None) -> ChatOpenAI:
+    def get_llm(self, temperature: float = None, light_weight: bool = False) -> ChatOpenAI:
         '''
             Returns the LLM model based on the config
 
@@ -37,12 +38,21 @@ class LLMHelper:
             if temperature is None:
                 temperature = self.config.OPENAI_TEMPERATURE
 
+            if light_weight:
+                model_name = self.config.OPENAI_ENGINE_LIGHT
+                engine = self.config.OPENAI_ENGINE_LIGHT
+            else:
+                model_name = self.config.OPENAI_ENGINE
+                engine = self.config.OPENAI_ENGINE
+            
+            max_tokens = self.config.OPENAI_MAX_TOKENS
+
             # We should use the chat completion API, since azure GPT-4 only supports chat completion
             return ChatOpenAI(
-                model_name = self.config.OPENAI_ENGINE,
-                engine = self.config.OPENAI_ENGINE,
+                model_name = model_name,
+                engine = engine,
                 temperature = temperature,
-                max_tokens = self.config.OPENAI_MAX_TOKENS,
+                max_tokens = max_tokens,
             )
 
         else:

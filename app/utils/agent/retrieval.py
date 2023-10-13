@@ -15,13 +15,13 @@ logger = logging.getLogger(__name__)
 # For get semantic answer based on the related documents with chat history
 system_message_template_qa_w_history = """You are an adept assistant, capable of answering questions based on context user provided.
 Please reply to the question using only the information presented in the summary and prior conversations.
-Always include the source name for each fact you use in the response (e.g.: [[sample/A.txt]], [[doc/B.pdf]], etc.) to support your idea.
-If you can't find it, reply politely that the information is not in the knowledge base.
+Always include the source name for each fact you use in the response (e.g.: [[sample/A.txt]], [[doc/B.pdf]], etc.) to support your idea. Dont make up any source name.
+If you can't find it, reply politely that the information is not in the knowledge base. 
 Detect the language of the last question and answer in the same language. 
-Try to provide an answer as concise as possible, but do not sacrifice the quality of the answer.
 If asked for enumerations list all of them and do not invent any.
 If the question is a greeting, reply with a greeting and ask what I can help.
 """
+#Try to provide an answer as concise as possible, but do not sacrifice the quality of the answer.
 
 human_question_template_qa_w_history = """
 Summary: 
@@ -83,7 +83,23 @@ class DocRetrivalTool(BaseTool):
         else:
             summary = ""
 
-        logger.info(f"Running agent with summary: {summary}")
+        # Each paragraph starts with keyword Conntent:
+        # Find all the paragraphs
+        # paragraphs = re.findall(r"Content:.*", summary)
+
+        # # Each Source starts with keyword Source name:
+        # # Find all the sources
+        # sources = re.findall(r"Source name:.*", summary)
+
+        # assert len(paragraphs) == len(sources), "The number of paragraphs and sources should be the same"
+        
+        # Take first 100 characters of each paragraph
+        # snippets = "\n".join([f"{paragraph[:100]}......" for paragraph in paragraphs])
+
+        # Take first 100 characters of each source 
+
+
+        logger.info(f"Running agent with summary: {summary[:200]} ......")
         # get a chat completion from the formatted messages
         answer = self.llm(
             self.chat_prompt.format_prompt(

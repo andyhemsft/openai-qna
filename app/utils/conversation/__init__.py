@@ -52,11 +52,11 @@ class Message:
 class Source:
     """This class represents a Source."""
 
-    def __init__(self, source_urls: Dict[int, str]):
+    def __init__(self, source_urls: Dict[int, str]=[]):
         self.source_urls = source_urls
         self.source_urls = self._transform_url()
 
-    def _transform_url(self) -> Tuple[str, str, str]:
+    def _transform_url(self) -> List[Tuple[str, str, str]]:
         """This function transforms the url."""
 
         blob_storage_client = get_storage_client('blob')
@@ -102,7 +102,7 @@ class Source:
 class Answer:
     """This class represents an Answer."""
 
-    def __init__(self, message: Message, source: Source):
+    def __init__(self, message: Message, source: Source = None):
         """Initialize the Answer.
         
         Args:

@@ -187,9 +187,9 @@ class HistoryManager:
 
         messages = []
 
-        logger.info(f"len(documents): {len(documents)}")
+        # logger.info(f"len(documents): {len(documents)}")
         for doc in documents:
-            logger.info(f"doc: {doc}")
+            # logger.info(f"doc: {doc}")
             message = self.from_doc_to_message(doc)
             if int(message.sequence_num) > 0: # The 0 sequence number is a placeholder
                 messages.append((message.sequence_num, message))

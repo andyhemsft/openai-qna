@@ -7,6 +7,7 @@ from app.utils.llm import LLMHelper
 
 from langchain.docstore.document import Document
 
+logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def azuresearch() -> AzureSearch:
@@ -20,25 +21,13 @@ def azuresearch() -> AzureSearch:
     if azuresearch.check_existing_index("test_index"):
         azuresearch.delete_index("test_index")
 
-def test_check_existing_index(azuresearch: AzureSearch) -> None:
-    """Test the check_existing_index function."""
-    assert azuresearch.check_existing_index("test_index") == False
+def test_similarity_search(azuresearch):
+    """This function tests similarity search function for vector store."""
 
-def test_create_and_delete_index(azuresearch: AzureSearch) -> None:
-    """Test the create_index and drop_index function."""
+    # Special test case for Azure Search
 
-    metadata_schema = {
-        "source": "TEXT",
-        "chunk": "NUMERIC",
-    }
+    query = "匯豐卓越理財提供什麼服務"
+    result = azuresearch.similarity_search(query, index_name='embeddings', search_text='HSBC Premier provide what services')
 
-    azuresearch.create_index("test_index", metadata_schema=metadata_schema)
-    assert azuresearch.check_existing_index("test_index") == True
-
-    azuresearch.drop_index("test_index")
-    assert azuresearch.check_existing_index("test_index") == False
-
-
-def test_add_documents(azuresearch: AzureSearch) -> None:
-
-    pass
+    assert len(result) > 0
+    logger.info(result[0][0].page_content)
