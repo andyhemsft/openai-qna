@@ -171,3 +171,6 @@ data/
 host.json
 local.settings.json
 
+# faiss index
+index.faiss
+index.pkl

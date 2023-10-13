@@ -60,8 +60,10 @@ def test_api_chat(client):
     assert "answer" in response.json
 
     # Remove the test index
-    config = Config()
-    indexer = get_indexer(config)
+    old_vector_store_type = Config.VECTOR_STORE_TYPE
+    Config.VECTOR_STORE_TYPE = 'faiss'
+    indexer = get_indexer(Config())
+    Config.VECTOR_STORE_TYPE = old_vector_store_type
     indexer.drop_all_indexes()
 
 def test_api_parse_document(client):
@@ -118,6 +120,8 @@ def test_api_index_document(client):
     os.remove(sample_dest_url)
 
     # Remove the test index
-    config = Config()
-    indexer = get_indexer(config)
+    old_vector_store_type = Config.VECTOR_STORE_TYPE
+    Config.VECTOR_STORE_TYPE = 'faiss'
+    indexer = get_indexer(Config())
+    Config.VECTOR_STORE_TYPE = old_vector_store_type
     indexer.drop_all_indexes()
