@@ -39,81 +39,14 @@ iCAN Card
 US dollar Visa Gold
 HSBC Pulse UnionPay Dual Currency Diamond Card
 UnionPay Dual Currency Card
-Annual fee
-Primary card
-waived permanently
-waived permanently
-waived permanently
-HK$2,000
-HK$2,000
-HK$1,800
-HK$600
-HK$300
-HK$300
-US$80
-HK$1,800
-HK$300
-Additional card (separate billing)
-N/A
-N/A
-N/A
-N/A
-N/A
-N/A
-HK$600
-HK$300
-N/A
-US$80
-N/A
-N/A
-Additional card (combined billing)
-waived permanently
-waived permanently
-waived permanently
-HK$1,000
-N/A
-HK$900
-HK$300
-HK$150
-N/A
-US$40
-HK$900
-HK$150
-Card replacement fee
-Card replacement before renewal
-waived
-HK$100
-HK$100
-HK$100
-HK$100
-HK$100
-HK$100
-HK$100
-HK$100
-US$13
-HK$100
-HK$100
-Virtual card account
-N/A
-N/A
-N/A
-N/A
-N/A
-N/A
-N/A
-N/A
-HK$100
-N/A
-N/A
-N/A
 Cash advance fee
 From ATM (per transaction)
-Handling fee of 1% on the cash advance amount (minimum HK$100)1
+Handling fee of 1% on the cash advance amount (minimum HK$100)
 Handling fee of 1% on the cash advance amount (minimum US$7)
-Handling fee of 1% on the cash advance amount (minimum HK$100 for HKD sub-account/minimum RMB100 for RMB sub-account)1
+Handling fee of 1% on the cash advance amount (minimum HK$100 for HKD sub-account/minimum RMB100 for RMB sub-account)
 Over-the-counter advances (per transaction)
-Handling fee of 1% on the cash advance amount (minimum HK$120)1
-Handling fee of 1% on the cash advance amount (minimum US$10)1
+Handling fee of 1% on the cash advance amount (minimum HK$120)
+Handling fee of 1% on the cash advance amount (minimum US$10)
 N/A
 Minimum payment due
 Total fees and charges currently billed to the card statement plus 1% of the statement balance (excluding any fees and charges currently billed) as at the statement date (minimum HK$300), plus overdue or overlimit due whichever is higher
