@@ -25,6 +25,8 @@ from app.utils.agent.mdrt import get_mdrt_qna_agent
 from app.utils.conversation.intent import LLMIntentDetector
 from app.utils.conversation.customprompt import DEFAULT_PROMPT, CHAT_SUMMARIZATION_PROMPT
 
+from app.utils.translator import get_translator
+
 logger = logging.getLogger(__name__)
 
 class LLMChatBot:
@@ -51,6 +53,8 @@ class LLMChatBot:
         self.llm_intent_detector = LLMIntentDetector(config=self.config)
 
         self.default_prompt = DEFAULT_PROMPT
+
+        self.translator = get_translator(config)
 
     def initialize_session(self, user_meta: Dict) -> Message:
         """Initialize a session.
@@ -263,6 +267,16 @@ class LLMChatBot:
             question_with_chat_history = f'{chat_history}\n{question}'
 
         logger.info(f'Question with chat history: {question_with_chat_history}')
+
+        def isEnglish(s):
+            try:
+                s.encode(encoding='utf-8').decode('ascii')
+            except UnicodeDecodeError:
+                return False
+            else:
+                return True 
+        if not isEnglish(keywords):
+            keywords = self.translator.translate(keywords)
         logger.info(f'Keywords: {keywords}')
         
         intent = self.detect_intent(question_with_chat_history)
@@ -271,26 +285,15 @@ class LLMChatBot:
             # get related documents
             logger.info(f"indices: {index_name}")
 
-            def isEnglish(s):
-                try:
-                    s.encode(encoding='utf-8').decode('ascii')
-                except UnicodeDecodeError:
-                    return False
-                else:
-                    return True
-                
-            
-
 
             if keywords is None:
                 related_documents = self.indexer.similarity_search(question_with_chat_history, index_name=index_name)
             else:
                 # check if keywords contains non english characters
                 # if it does, then do not use the keywords
-                if isEnglish(keywords):
-                    related_documents = self.indexer.similarity_search(question_with_chat_history, index_name=index_name, search_text=keywords)
-                else:
-                    related_documents = self.indexer.similarity_search(question_with_chat_history, index_name=index_name)
+                
+                
+                related_documents = self.indexer.similarity_search(question_with_chat_history, index_name=index_name, search_text=keywords)
             
             related_documents_filtered = []
             for document, score in related_documents:

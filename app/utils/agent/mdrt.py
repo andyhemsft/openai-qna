@@ -48,6 +48,8 @@ class GetMDRTReqTool(BaseTool):
             answer = f"Cannot find the requirement for {category} in {region}. Please provide the correct information."
             return answer
 
+        logger.info(f"SQL -- Running agent with category: {category}, region: {region}")
+        logger.info(f"SQL -- Result: {result}")
         answer = f"To achieve {category}, the agent must surpass the {region} thresholds requirement for {result[0][2]} FYCC, {result[0][3]} FYP, {result[0][4]} Case Count"
         
         return answer
@@ -82,6 +84,8 @@ class GetAgentSalesTool(BaseTool):
             answer = f"Cannot find your name: {agent_name} in the database. Please provide the correct information."
             return answer
 
+        logger.info(f"SQL -- Running agent with agent_name: {agent_name}")
+        logger.info(f"SQL -- Result: {result}")
         answer = f"{agent_name} is in {result[0][1]} Region, his sales record is: {result[0][2]} FYCC, {result[0][3]} FYP, {result[0][4]} Case Count"
         
         return answer

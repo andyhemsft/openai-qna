@@ -32,7 +32,7 @@ class Config():
     OPENAI_ENGINE = os.getenv('OPENAI_ENGINE')
     OPENAI_ENGINE_LIGHT = os.getenv('OPENAI_ENGINE_LIGHT')
     OPENAI_EMBEDDING_ENGINE = os.getenv('OPENAI_EMBEDDING_ENGINE')
-    OPENAI_TEMPERATURE = os.getenv('OPENAI_TEMPERATURE', 0.0) # Low temperature (temperature 0.1) to ensure reproducibility.
+    OPENAI_TEMPERATURE = os.getenv('OPENAI_TEMPERATURE', 0) # Low temperature (temperature 0.1) to ensure reproducibility.
     OPENAI_MAX_TOKENS = os.getenv('OPENAI_MAX_TOKENS', 1000)
     # for text-embedding-ada-002 model , you will obtain a high-dimensional array (vector) consisting of 1536 floating-point numbers
     OPENAI_EMBEDDING_SIZE = os.getenv('OPENAI_EMBEDDING_SIZE', 1536) 
@@ -80,10 +80,17 @@ class Config():
     CHUNKING_STRATEGY_OVERLAP = os.getenv('CHUNKING_STRATEGY_OVERLAP', 400)
 
     # Similarity threshold parameters
-    TOP_K_RELATED_DOCUMENTS = os.getenv('TOP_K_RELATED_DOCUMENTS', 3)
+    TOP_K_RELATED_DOCUMENTS = os.getenv('TOP_K_RELATED_DOCUMENTS', 6)
     CHAT_HISTORY_SEARCH_TYPE = os.getenv('CHAT_HISTORY_SEARCH_TYPE', 'most_recent') # most_related, most_recent
     CHAT_HISTORY_SIMILARITY_THRESHOLD = os.getenv('CHAT_HISTORY_SIMILARITY_THRESHOLD', 0)
-    DOCUMENT_SIMILARITY_THRESHOLD = os.getenv('DOCUMENT_SIMILARITY_THRESHOLD', 0.5)
+    DOCUMENT_SIMILARITY_THRESHOLD = os.getenv('DOCUMENT_SIMILARITY_THRESHOLD', 0)
 
     # SQL DB parameters
     SQL_CONNECTION_STRING = os.getenv('SQL_CONNECTION_STRING')
+
+
+    # Translation parameters
+    TRANSLATOR_TYPE = os.getenv('TRANSLATION_TYPE', 'azure') # azure, google
+    AZURE_TRANSLATOR_API_KEY = os.getenv('AZURE_TRANSLATOR_API_KEY')
+    AZURE_TRANSLATOR_ENDPOINT = os.getenv('AZURE_TRANSLATOR_ENDPOINT')
+    AZURE_TRANSLATOR_API_REGION = os.getenv('AZURE_TRANSLATOR_API_REGION', 'eastus2')

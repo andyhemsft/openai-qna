@@ -155,7 +155,7 @@ The rephased question must be in the same language as the original question.
 Please do it step by step:
 Step 1: Check if the follow-up question is already self-contained
 Step 2: Rephrase the question if not self-contained
-Step 3: Extract keywords from the rephrased question.
+Step 3: Extract keywords from the rephrased question. Keep the list of keywords as short as possible.
 Step 4: If the question is not rephased, extract keywords from the original question.
 Step 5: Double check if the keywords are extracted. Otherwise, repeat step 3.
 Step 6: Translate the keywords into English
