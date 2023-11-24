@@ -138,10 +138,13 @@ class LLMChatBot:
         # Locate the keywords using regex first, dont use split
         keywords = re.findall(r'\[\[\[.*?\]\]\]', rephrased_question)
 
+        
         if len(keywords) > 0:
             keywords = keywords[0].split('[[[')[1].split(']]]')[0].split(',')
             keywords = [keyword.strip() for keyword in keywords]
             keywords = " ".join(keywords)
+
+        logger.info(f'Keywords: {keywords}')
 
         # Get the rephrased question
         rephrased_question = rephrased_question.split('Final Answer: ')
@@ -279,7 +282,8 @@ class LLMChatBot:
             keywords = self.translator.translate(keywords)
         logger.info(f'Keywords: {keywords}')
         
-        intent = self.detect_intent(question_with_chat_history)
+        # intent = self.detect_intent(question_with_chat_history)
+        intent = "DocRetrieval"
 
         if intent == "DocRetrieval":
             # get related documents

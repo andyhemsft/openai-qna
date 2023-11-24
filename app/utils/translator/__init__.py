@@ -57,7 +57,7 @@ class AzureAITranslator(BaseTranslator):
             request = requests.post(self.constructed_url, params=self.params, headers=self.headers, json=body)
             response = request.json()
 
-            logger.debug(json.dumps(response, sort_keys=True, ensure_ascii=False, indent=4, separators=(',', ': ')))
+            logger.info(json.dumps(response, sort_keys=True, ensure_ascii=False, indent=4, separators=(',', ': ')))
 
             return response[0]["translations"][0]["text"]
         
