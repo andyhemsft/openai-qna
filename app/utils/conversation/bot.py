@@ -20,7 +20,7 @@ from app.utils.index import get_indexer
 
 from app.utils.agent.base import AgentExecutor
 from app.utils.agent.retrieval import get_doc_retrieval_agent
-from app.utils.agent.mdrt import get_mdrt_qna_agent
+from app.utils.agent.mdrt_function_call import get_mdrt_qna_agent
 
 from app.utils.conversation.intent import LLMIntentDetector
 from app.utils.conversation.customprompt import DEFAULT_PROMPT, CHAT_SUMMARIZATION_PROMPT
@@ -282,8 +282,8 @@ class LLMChatBot:
             keywords = self.translator.translate(keywords)
         logger.info(f'Keywords: {keywords}')
         
-        # intent = self.detect_intent(question_with_chat_history)
-        intent = "DocRetrieval"
+        intent = self.detect_intent(question_with_chat_history)
+        # intent = "DocRetrieval"
 
         if intent == "DocRetrieval":
             # get related documents
@@ -315,6 +315,7 @@ class LLMChatBot:
 
 
         elif intent == "MDRT_QnA":
+
             agent = get_mdrt_qna_agent(self.llm)
 
             executor = AgentExecutor(agent)

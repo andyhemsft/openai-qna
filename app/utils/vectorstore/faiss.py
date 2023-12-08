@@ -34,9 +34,6 @@ class FAISSExtended(BaseVectorStore):
         embedding_fn = embeddings.embed_query
         self.vector_store  = FAISS_TYPE(embedding_fn, index, InMemoryDocstore({}), {})
 
-        # texts = ["FAISS"]
-        # self.vector_store = FAISS_TYPE.from_texts(texts, embeddings)
-
     def load_local(self, file_path: str) -> None:
         """This function loads the vector store from a local file."""
 

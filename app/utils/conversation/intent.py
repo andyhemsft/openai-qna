@@ -19,24 +19,12 @@ logger = logging.getLogger(__name__)
 
 system_message_template = """
 Here is the list of {intent}.
-1. DocRetrieval
-2. MDRT_QnA
-3. Other
+1. DocRetrieval: This tool is beneficial when you need to respond to inquiries about HSBC products or services based on associated documents.
+2. MDRT_QnA: This tool is advantageous when you need to respond to inquiries about MDRT and agent sales.
+3. Other: This tool is helpful when you need to respond to inquiries that do not fall into the above two categories.
 
 Extract the intent from the text started and ended by '''. The output will be in the intent name. Dont translate the language.
 Here are some example.
-
-Input:
-'''I want to know the benific of this product'''
-
-Output:
-DocRetrieval
-
-Input:
-'''它提供什麼服務？'''
-
-Output:
-DocRetrieval
 
 Input:
 '''What is HSBC Life Insurance'''
@@ -44,11 +32,6 @@ Input:
 Output:
 DocRetrieval
 
-Input:
-'''What is fee for this product'''
-
-Output:
-DocRetrieval
 
 Input:
 '''What is the sales of Agent A'''

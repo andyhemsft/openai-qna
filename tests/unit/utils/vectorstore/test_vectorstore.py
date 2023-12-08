@@ -95,8 +95,6 @@ def test_load_local(vector_stores):
 
     config = Config()
 
-
-
     for key, vector_store in vector_stores.items():
         if key == 'faiss':
             logger.info('Testing FAISS load from file')
